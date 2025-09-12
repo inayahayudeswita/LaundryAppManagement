@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard - Sistem Laundry</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand">
+        <i class="fas fa-tshirt"></i> Laundry Abdan
+      </a>
+      <div class="nav-user">
+        <span id="adminName">Admin</span>
+        <button class="btn-logout" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTAINER -->
+  <div class="container">
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon revenue"><i class="fas fa-dollar-sign"></i></div>
+        <div class="stat-info">
+          <h3 id="totalRevenue">Rp 0</h3>
+          <p>Total Pendapatan</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon branches"><i class="fas fa-store"></i></div>
+        <div class="stat-info">
+          <h3 id="totalBranches">2</h3>
+          <p>Cabang Aktif</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-section">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label class="form-label">Cabang</label>
+          <select id="filterCabang" class="form-select" onchange="applyFilters()">
+            <option value="">Semua Cabang</option>
+            <option value="Cabang 1">Cabang 1</option>
+            <option value="Cabang 2">Cabang 2</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="filterStatus" class="form-select" onchange="applyFilters()">
+            <option value="">Semua Status</option>
+            <option value="progress">On Progress</option>
+            <option value="finished">Finished</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Periode</label>
+          <select id="filterPeriod" class="form-select" onchange="applyFilters()">
+            <option value="all">Semua Data</option>
+            <option value="today">Hari Ini</option>
+            <option value="7days">7 Hari Terakhir</option>
+            <option value="30days">30 Hari Terakhir</option>
+            <option value="thisMonth">Bulan Ini</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-secondary" onclick="resetFilters()">
+            <i class="fas fa-undo"></i> Reset Filter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions-bar">
+      <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="Cari berdasarkan nota, pelanggan..." onkeyup="performSearch()" />
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <div class="actions-buttons">
+        <button class="btn btn-success" onclick="exportCSV()">
+          <i class="fas fa-file-csv"></i> Export CSV
+        </button>
+        <button class="btn btn-primary" onclick="exportExcel()">
+          <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- DATA PANEL -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Data Laundry</h2>
+        <span id="dataCount">Total: 0 data</span>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>No. Nota</th>
+              <th>Pelanggan</th>
+              <th>Cabang</th>
+              <th>Status</th>
+              <th>Tgl Terima</th>
+              <th>Tgl Selesai</th>
+              <th>Jenis</th>
+              <th>Kg</th>
+              <th>Tgl Ambil</th>
+              <th>Tgl Bayar</th>
+              <th>Pembayaran</th>
+              <th>Nama Setrika</th>
+              <th>Harga</th>
+            </tr>
+          </thead>
+          <tbody id="dataTable">
+            <tr>
+              <td colspan="13" class="empty-state">Tidak ada data untuk ditampilkan</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-container">
+        <div class="pagination-info">
+          <span id="paginationInfo">Menampilkan 0 dari 0 data</span>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

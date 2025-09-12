@@ -1,0 +1,16 @@
+﻿nomorNota,namaPelanggan,tanggalTerima,tanggalSelesai,jenisLaundry,jumlahKg,harga,status,tanggalAmbil,tanggalBayar,pembayaran,namaSetrika
+KS001,Budi Santoso,2025-09-01,2025-09-03,reg,3,15000,progress,,,, 
+KS002,Sari Dewi,2025-09-02,2025-09-04,set,4,25000,finished,2025-09-04,2025-09-04,cash,Ina
+KS003,Agus Pratama,2025-09-03,2025-09-05,cl,2,12000,progress,,,, 
+KS004,Dewi Lestari,2025-09-04,2025-09-06,exp 2h,5,50000,finished,2025-09-06,2025-09-06,qris,Tina
+KS005,Fajar Nugraha,2025-09-05,2025-09-07,reg,6,30000,progress,,,, 
+KS006,Lina Marlina,2025-09-06,2025-09-08,set,4,28000,finished,2025-09-08,2025-09-08,cash,Rina
+KS007,Hendra Saputra,2025-09-07,2025-09-09,reg,7,35000,progress,,,, 
+KS008,Nita Anggraini,2025-09-08,2025-09-10,exp 1h,2,20000,finished,2025-09-10,2025-09-10,qris,Yuni
+KS009,Ahmad Rahman,2025-09-01,2025-09-03,reg,5,30000,finished,2025-09-03,2025-09-03,cash,Tina
+KS010,Siti Aminah,2025-09-02,2025-09-04,exp 2h,2,20000,progress,,,, 
+KS011,Joko Widodo,2025-09-03,2025-09-05,cl,3,15000,progress,,,, 
+KS012,Maya Sari,2025-09-04,2025-09-06,reg,6,32000,finished,2025-09-06,2025-09-06,qris,Rudi
+KS013,Rio Pratama,2025-09-05,2025-09-07,set,4,26000,progress,,,, 
+KS014,Intan Permata,2025-09-06,2025-09-08,exp 1h,2,22000,finished,2025-09-08,2025-09-08,cash,Santi
+KS015,Bambang Sutrisno,2025-09-07,2025-09-09,reg,3,18000,progress,,,,
