@@ -6,6 +6,48 @@
     <title>Sistem Manajemen Laundry</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/kasir.css">
+    <style>
+        .form-input[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .payment-status.belum-bayar {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .payment-option.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        
+        .payment-option input:disabled {
+            cursor: not-allowed;
+        }
+        
+        .price-info {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .payment-option {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .payment-option.selected {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -17,7 +59,6 @@
     </div>
 
     <div class="container">
-
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('onprogress')">
                 <i class="fas fa-clock"></i>
@@ -65,6 +106,7 @@
                                     <th>Jenis</th>
                                     <th>Kg</th>
                                     <th>Harga</th>
+                                    <th>Pembayaran</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -88,21 +130,6 @@
                             <input type="text" id="searchFinished" placeholder="Cari nomor nota, nama, atau jenis..." 
                                    onkeyup="performSearch('finished')" class="search-input">
                             <i class="fas fa-search search-icon"></i>
-                        </div>
-                        <div class="export-dropdown">
-                            <button class="btn btn-success" onclick="toggleExportDropdown()">
-                                <i class="fas fa-download"></i>
-                                Export
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="dropdown-content" id="exportDropdown">
-                                <a href="#" onclick="exportCSV()">
-                                    <i class="fas fa-file-csv"></i> Export CSV
-                                </a>
-                                <a href="#" onclick="exportExcel()">
-                                    <i class="fas fa-file-excel"></i> Export Excel
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -164,8 +191,8 @@
                         <select id="jenisLaundry" class="form-input" required>
                             <option value="">Pilih Jenis</option>
                             <option value="reg">Regular</option>
-                            <option value="exp 1h">Express 1 Jam</option>
-                            <option value="exp 2h">Express 2 Jam</option>
+                            <option value="exp1h">Express 1 Jam</option>
+                            <option value="exp2h">Express 2 Jam</option>
                             <option value="cl">Cuci Lipat</option>
                             <option value="set">Setrika</option>
                             <option value="sat">Satuan</option>
@@ -178,19 +205,43 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Harga (Rp)</label>
-                            <input type="number" id="harga" class="form-input" required>
+                            <input type="number" id="harga" class="form-input" required readonly>
+                            <div class="price-info">
+                                <i class="fas fa-info-circle"></i> Harga otomatis berdasarkan jenis & kg
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-primary" onclick="saveData()">
-                            <i class="fas fa-save"></i>
-                            <span id="saveButtonText">Simpan</span>
-                        </button>
-                        <button class="btn btn-secondary" onclick="hideForm()">
-                            <i class="fas fa-times"></i>
-                            Batal
-                        </button>
+                    <div class="form-group">
+                        <label class="form-label">Metode Pembayaran</label>
+                        <div class="payment-options">
+                            <div class="payment-option" onclick="selectPayment('none', 'form')">
+                                <input type="radio" name="formPayment" value="none" id="formNone">
+                                <label for="formNone"><i class="fas fa-clock"></i> Belum Bayar</label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('cash', 'form')">
+                                <input type="radio" name="formPayment" value="cash" id="formCash">
+                                <label for="formCash"><i class="fas fa-money-bill"></i> Cash</label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('transfer', 'form')">
+                                <input type="radio" name="formPayment" value="transfer" id="formTransfer">
+                                <label for="formTransfer"><i class="fas fa-university"></i> Transfer</label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('qris', 'form')">
+                                <input type="radio" name="formPayment" value="qris" id="formQris">
+                                <label for="formQris"><i class="fas fa-qrcode"></i> QRIS</label>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="saveData()">
+                        <i class="fas fa-save"></i>
+                        <span id="saveButtonText">Simpan</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="hideForm()">
+                        <i class="fas fa-times"></i>
+                        Batal
+                    </button>
                 </div>
             </div>
         </div>
@@ -215,15 +266,15 @@
                     <div class="form-group">
                         <label class="form-label">Metode Pembayaran *</label>
                         <div class="payment-options">
-                            <div class="payment-option" onclick="selectPayment('cash')">
+                            <div class="payment-option" onclick="selectPayment('cash', 'finish')">
                                 <input type="radio" name="payment" value="cash" id="cash">
                                 <label for="cash"><i class="fas fa-money-bill"></i> Cash</label>
                             </div>
-                            <div class="payment-option" onclick="selectPayment('transfer')">
+                            <div class="payment-option" onclick="selectPayment('transfer', 'finish')">
                                 <input type="radio" name="payment" value="transfer" id="transfer">
                                 <label for="transfer"><i class="fas fa-university"></i> Transfer</label>
                             </div>
-                            <div class="payment-option" onclick="selectPayment('qris')">
+                            <div class="payment-option" onclick="selectPayment('qris', 'finish')">
                                 <input type="radio" name="payment" value="qris" id="qris">
                                 <label for="qris"><i class="fas fa-qrcode"></i> QRIS</label>
                             </div>
@@ -233,16 +284,16 @@
                         <label class="form-label">Nama Petugas Setrika</label>
                         <input type="text" id="finishNamaSetrika" class="form-input" placeholder="Opsional">
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-primary" onclick="confirmFinish()">
-                            <i class="fas fa-check"></i>
-                            Selesai
-                        </button>
-                        <button class="btn btn-secondary" onclick="hideFinishForm()">
-                            <i class="fas fa-times"></i>
-                            Batal
-                        </button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="confirmFinish()">
+                        <i class="fas fa-check"></i>
+                        Selesai
+                    </button>
+                    <button class="btn btn-secondary" onclick="hideFinishForm()">
+                        <i class="fas fa-times"></i>
+                        Batal
+                    </button>
                 </div>
             </div>
         </div>

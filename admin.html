@@ -41,6 +41,142 @@
           <p>Cabang Aktif</p>
         </div>
       </div>
+      <!-- PRICING CARD -->
+      <div class="pricing-card" onclick="togglePricingTable()">
+        <div class="pricing-header">
+          <div class="pricing-title">
+            <div class="pricing-icon">
+              <i class="fas fa-tags"></i>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 18px;">Daftar Harga</h3>
+              <p class="pricing-subtitle">Kelola harga layanan</p>
+            </div>
+          </div>
+          <button class="pricing-toggle" id="pricingToggle">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="pricing-stats">
+          <div class="pricing-stat">
+            <p class="pricing-stat-value" id="serviceCount">6</p>
+            <p class="pricing-stat-label">Layanan</p>
+          </div>
+          <div class="pricing-stat">
+            <p class="pricing-stat-value" id="avgPrice">Rp 8K</p>
+            <p class="pricing-stat-label">Rata-rata</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRICING TABLE -->
+    <div class="pricing-table-container" id="pricingTableContainer">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0; color: #2c3e50;">
+          <i class="fas fa-tags" style="color: #667eea; margin-right: 8px;"></i>
+          Kelola Harga Layanan
+        </h3>
+        <button class="btn btn-primary" onclick="saveAllPrices()">
+          <i class="fas fa-save"></i> Simpan Semua
+        </button>
+      </div>
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th>Kode</th>
+            <th>Nama Layanan</th>
+            <th>Harga per Kg</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>REG</strong></td>
+            <td class="service-name">Regular</td>
+            <td>
+              <input type="number" class="price-input" id="price-reg" value="5000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('reg')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>EXP1H</strong></td>
+            <td class="service-name">Express 1 Jam</td>
+            <td>
+              <input type="number" class="price-input" id="price-exp1h" value="15000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('exp1h')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>EXP2H</strong></td>
+            <td class="service-name">Express 2 Jam</td>
+            <td>
+              <input type="number" class="price-input" id="price-exp2h" value="12000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('exp2h')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>CL</strong></td>
+            <td class="service-name">Cuci Lipat</td>
+            <td>
+              <input type="number" class="price-input" id="price-cl" value="7000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('cl')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>SET</strong></td>
+            <td class="service-name">Setrika</td>
+            <td>
+              <input type="number" class="price-input" id="price-set" value="3000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('set')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>SAT</strong></td>
+            <td class="service-name">Satuan</td>
+            <td>
+              <input type="number" class="price-input" id="price-sat" value="10000" min="0">
+            </td>
+            <td>
+              <div class="price-actions">
+                <button class="btn-save-price" onclick="savePrice('sat')">
+                  <i class="fas fa-save"></i> Simpan
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- FILTERS -->
@@ -88,9 +224,6 @@
         <i class="fas fa-search search-icon"></i>
       </div>
       <div class="actions-buttons">
-        <button class="btn btn-success" onclick="exportCSV()">
-          <i class="fas fa-file-csv"></i> Export CSV
-        </button>
         <button class="btn btn-primary" onclick="exportExcel()">
           <i class="fas fa-file-excel"></i> Export Excel
         </button>
@@ -139,8 +272,9 @@
   </div>
 
   <!-- SCRIPT -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="js/admin.js"></script>
+
 </body>
 </html>
