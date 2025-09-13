@@ -68,24 +68,32 @@ function logout() {
 // ===============================
 // Pricing Management
 // ===============================
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function parseNumber(str) {
+    return parseInt(str.replace(/\./g, "")) || 0;
+}
+
 function loadPricing() {
     const savedPrices = localStorage.getItem('servicePrices');
     if (savedPrices) {
         servicePrices = JSON.parse(savedPrices);
     }
     
-    // Update input values
+    // Update input values pakai format ribuan
     Object.keys(servicePrices).forEach(service => {
         const input = document.getElementById('price-' + service);
         if (input) {
-            input.value = servicePrices[service];
+            input.value = formatNumber(servicePrices[service]);
         }
     });
 }
 
 function savePrice(service) {
     const input = document.getElementById('price-' + service);
-    const price = parseInt(input.value) || 0;
+    const price = parseNumber(input.value);
     
     servicePrices[service] = price;
     localStorage.setItem('servicePrices', JSON.stringify(servicePrices));
@@ -93,7 +101,6 @@ function savePrice(service) {
     updatePricingStats();
     
     // Show success message
-    const buttons = document.querySelectorAll('.btn-save-price');
     const currentButton = event.target.closest('.btn-save-price');
     const originalText = currentButton.innerHTML;
     currentButton.innerHTML = '<i class="fas fa-check"></i> Tersimpan';
@@ -110,7 +117,7 @@ function saveAllPrices() {
     
     services.forEach(function(service) {
         const input = document.getElementById('price-' + service);
-        const price = parseInt(input.value) || 0;
+        const price = parseNumber(input.value);
         servicePrices[service] = price;
     });
     
@@ -140,6 +147,20 @@ function updatePricingStats() {
     
     document.getElementById('avgPrice').textContent = formatRupiah(avgPrice);
 }
+
+// Tambahkan auto-format saat user ketik di input harga
+document.querySelectorAll("input[id^='price-']").forEach(input => {
+    input.addEventListener("input", function() {
+        let cursorPos = this.selectionStart;
+        let value = this.value.replace(/\./g, ""); // hapus titik lama
+        if (!isNaN(value) && value !== "") {
+            this.value = formatNumber(value);
+        } else {
+            this.value = "";
+        }
+        this.setSelectionRange(cursorPos, cursorPos); // biar kursor gak loncat
+    });
+});
 
 // ===============================
 // Public function to get prices (untuk digunakan di form kasir)
@@ -408,6 +429,11 @@ function exportExcel() {
     const totalHarga = filteredData
         .filter(function(item) { return item.status === 'Finished'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
+
+    // Calculate total belum bayar
+    const totalBelumBayar = filteredData
+        .filter(function(item) { return !item.metodePembayaran || item.metodePembayaran === 'belum bayar' || item.metodePembayaran === '-'; })
+        .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
     
     // LOGIC NAMA SETRIKA - Hitung total kg per nama setrika
     const setrikaStats = {};
@@ -485,6 +511,23 @@ function exportExcel() {
         'Nama Setrika': '',
         'Harga': ''
     });
+
+     excelData.push({
+        'No. Nota': 'TOTAL BELUM BAYAR',
+        'Pelanggan': '',
+        'Cabang': '',
+        'Status': '',
+        'Tgl Terima': '',
+        'Tgl Selesai': '',
+        'Jenis': '',
+        'Kg': '',
+        'Tgl Ambil': '',
+        'Tgl Bayar': '',
+        'Pembayaran': '',
+        'Nama Setrika': '',
+        'Harga': totalBelumBayar
+    });
+    
     
     excelData.push({
         'No. Nota': 'TOTAL PENDAPATAN',

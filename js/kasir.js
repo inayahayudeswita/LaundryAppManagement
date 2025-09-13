@@ -236,7 +236,6 @@ function renderOnProgressTable() {
                     <div class="action-buttons">
                         <button class="btn-icon edit" onclick="editData(${index})" title="Edit"><i class="fas fa-edit"></i></button>
                         <button class="btn-icon finish" onclick="showFinishForm(${index})" title="Selesai"><i class="fas fa-check"></i></button>
-                        <button class="btn-icon delete" onclick="deleteData(${index})" title="Hapus"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -267,7 +266,7 @@ function renderFinishedTable() {
             <td>${item.namaSetrika || '-'}</td>
             <td><span class="currency">${formatRupiah(item.harga)}</span></td>
             <td>
-                <button class="btn-icon delete" onclick="deleteFinishedData('${item.uid}')" title="Hapus"><i class="fas fa-trash"></i></button>
+                <button class="btn-icon edit" onclick="editFinishedData('${item.uid}')" title="Edit"><i class="fas fa-edit"></i></button>
             </td>
         </tr>
     `).join('');
@@ -401,14 +400,37 @@ function deleteData(index) {
     }
 }
 
-function deleteFinishedData(uid) {
-    if (confirm('Yakin hapus data ini?')) {
-        finishedData = finishedData.filter(item => item.uid !== uid);
-        saveDataLocal();
-        updateCounts();
-        renderFinishedTable();
+function editFinishedData(uid) {
+    const item = finishedData.find(data => data.uid === uid);
+    if (!item) return;
+
+    // Isi modal dengan data lama
+    document.getElementById('finishTanggalAmbil').value = item.tanggalAmbil || new Date().toISOString().split('T')[0];
+    document.getElementById('finishTanggalBayar').value = item.tanggalBayar || new Date().toISOString().split('T')[0];
+    document.getElementById('finishNamaSetrika').value = item.namaSetrika || '';
+
+    // Reset payment options
+    const finishOptions = document.querySelectorAll('#finishModal .payment-option');
+    const finishRadios = document.querySelectorAll('input[name="payment"]');
+    finishOptions.forEach(option => option.classList.remove('selected'));
+    finishRadios.forEach(radio => radio.checked = false);
+
+    // Set metode pembayaran lama
+    if (item.metodePembayaran) {
+        const paymentRadio = document.querySelector(`input[name="payment"][value="${item.metodePembayaran}"]`);
+        if (paymentRadio) {
+            paymentRadio.checked = true;
+            paymentRadio.closest('.payment-option').classList.add('selected');
+        }
     }
+
+    // Simpan index editing
+    finishIndex = finishedData.findIndex(data => data.uid === uid);
+
+    // Tampilkan modal
+    document.getElementById('finishModal').classList.add('show');
 }
+
 
 // ===============================
 // Finish Management - DIPERBAIKI
@@ -493,26 +515,42 @@ function confirmFinish() {
         return;
     }
 
-    const data = onProgressData[finishIndex];
-    const finishedItem = { 
-        ...data, 
-        tanggalAmbil, 
-        tanggalBayar, 
-        metodePembayaran, 
-        namaSetrika,
-        finishedAt: new Date().toISOString()
-    };
-    
-    finishedData.push(finishedItem);
-    onProgressData.splice(finishIndex, 1);
+    if (finishIndex !== null && finishIndex < finishedData.length) {
+        // EDIT FINISHED DATA
+        finishedData[finishIndex] = {
+            ...finishedData[finishIndex],
+            tanggalAmbil,
+            tanggalBayar,
+            metodePembayaran,
+            namaSetrika,
+            updatedAt: new Date().toISOString()
+        };
+        alert('Data finished berhasil diperbarui!');
+    } else {
+        // PINDAH dari On Progress ke Finished
+        const data = onProgressData[finishIndex];
+        const finishedItem = { 
+            ...data, 
+            tanggalAmbil, 
+            tanggalBayar, 
+            metodePembayaran, 
+            namaSetrika,
+            finishedAt: new Date().toISOString()
+        };
+        
+        finishedData.push(finishedItem);
+        onProgressData.splice(finishIndex, 1);
+        alert('Laundry berhasil diselesaikan!');
+    }
     
     saveDataLocal();
     updateCounts();
     renderOnProgressTable();
     renderFinishedTable();
     hideFinishForm();
-    alert('Laundry berhasil diselesaikan!');
+    finishIndex = null;
 }
+
 
 // ===============================
 // Search Functions
