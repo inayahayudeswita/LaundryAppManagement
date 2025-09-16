@@ -6,48 +6,6 @@
     <title>Sistem Manajemen Laundry</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/kasir.css">
-    <style>
-        .form-input[readonly] {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .payment-status.belum-bayar {
-            background-color: #fef3c7;
-            color: #92400e;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .payment-option.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            cursor: not-allowed;
-        }
-        
-        .payment-option input:disabled {
-            cursor: not-allowed;
-        }
-        
-        .price-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        .payment-option {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .payment-option.selected {
-            background-color: #e3f2fd;
-            border-color: #2196f3;
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -136,7 +94,7 @@
                 
                 <div class="panel-content">
                     <div class="table-container">
-                        <table id="finishedTableWrapper">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>UID</th>
@@ -149,7 +107,6 @@
                                     <th>Tgl Ambil</th>
                                     <th>Tgl Bayar</th>
                                     <th>Pembayaran</th>
-                                    <th>Nama Setrika</th>
                                     <th>Harga</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -170,7 +127,10 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="form-label">Nomor Nota</label>
-                        <input type="text" id="nomorNota" class="form-input" required>
+                        <input type="text" id="nomorNota" class="form-input" readonly>
+                        <div class="price-info">
+                            <i class="fas fa-info-circle"></i> Nomor nota otomatis berdasarkan tanggal
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nama Pelanggan</label>
@@ -280,10 +240,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Petugas Setrika</label>
-                        <input type="text" id="finishNamaSetrika" class="form-input" placeholder="Opsional">
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" onclick="confirmFinish()">
@@ -293,6 +249,38 @@
                     <button class="btn btn-secondary" onclick="hideFinishForm()">
                         <i class="fas fa-times"></i>
                         Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Modal -->
+        <div id="receiptModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Struk Laundry</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="receipt" id="receipt">
+                        <div class="receipt-header">
+                            <h3>CLEAN & FRESH LAUNDRY</h3>
+                            <p id="receiptBranch">Cabang 1</p>
+                            <p>Jl. Contoh No. 123</p>
+                            <p>Telp: (021) 123-4567</p>
+                        </div>
+                        <div id="receiptContent">
+                            <!-- Receipt content will be generated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="printReceipt()">
+                        <i class="fas fa-print"></i>
+                        Cetak
+                    </button>
+                    <button class="btn btn-secondary" onclick="hideReceiptModal()">
+                        <i class="fas fa-times"></i>
+                        Tutup
                     </button>
                 </div>
             </div>

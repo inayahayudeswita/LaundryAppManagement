@@ -189,7 +189,6 @@ function loadData() {
             tanggalAmbil: '-',
             tanggalBayar: '-',
             metodePembayaran: item.payment && item.payment !== 'none' ? item.payment : 'belum bayar',
-            namaSetrika: '-'
         };
     });
     
@@ -331,7 +330,6 @@ if (item.status === 'On Progress') {
             '<td>' + (item.tanggalAmbil !== '-' ? formatDate(item.tanggalAmbil) : '-') + '</td>' +
             '<td>' + (item.tanggalBayar !== '-' ? formatDate(item.tanggalBayar) : '-') + '</td>' +
             '<td>' + paymentDisplay + '</td>' +
-            '<td>' + (item.namaSetrika || '-') + '</td>' +
             '<td><span class="currency">' + formatRupiah(item.harga) + '</span></td>' +
         '</tr>';
     }).join('');
@@ -416,7 +414,6 @@ function exportExcel() {
             'Tgl Ambil': item.tanggalAmbil !== '-' ? item.tanggalAmbil : '',
             'Tgl Bayar': item.tanggalBayar !== '-' ? item.tanggalBayar : '',
             'Pembayaran': paymentExport,
-            'Nama Setrika': item.namaSetrika || '',
             'Harga': item.harga
         };
     });
@@ -435,18 +432,6 @@ function exportExcel() {
         .filter(function(item) { return !item.metodePembayaran || item.metodePembayaran === 'belum bayar' || item.metodePembayaran === '-'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
     
-    // LOGIC NAMA SETRIKA - Hitung total kg per nama setrika
-    const setrikaStats = {};
-    filteredData
-        .filter(function(item) { return item.status === 'Finished' && item.namaSetrika && item.namaSetrika !== '-'; })
-        .forEach(function(item) {
-            const nama = item.namaSetrika;
-            if (!setrikaStats[nama]) {
-                setrikaStats[nama] = 0;
-            }
-            setrikaStats[nama] += parseFloat(item.jumlahKg) || 0;
-        });
-    
     // Add summary rows
     excelData.push({
         'No. Nota': '',
@@ -460,7 +445,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': ''
     });
     
@@ -476,7 +460,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': ''
     });
     
@@ -492,7 +475,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': ''
     });
     
@@ -508,7 +490,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': ''
     });
 
@@ -524,7 +505,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': totalBelumBayar
     });
     
@@ -541,7 +521,6 @@ function exportExcel() {
         'Tgl Ambil': '',
         'Tgl Bayar': '',
         'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': totalHarga
     });
     
@@ -557,45 +536,9 @@ function exportExcel() {
         'Kg': '',
         'Tgl Ambil': '',
         'Tgl Bayar': '',
-        'Pembayaran': '',
-        'Nama Setrika': '',
         'Harga': ''
     });
     
-    excelData.push({
-        'No. Nota': 'STATISTIK PETUGAS SETRIKA',
-        'Pelanggan': '',
-        'Cabang': '',
-        'Status': '',
-        'Tgl Terima': '',
-        'Tgl Selesai': '',
-        'Jenis': '',
-        'Kg': '',
-        'Tgl Ambil': '',
-        'Tgl Bayar': '',
-        'Pembayaran': '',
-        'Nama Setrika': '',
-        'Harga': ''
-    });
-    
-    // Add setrika stats
-    Object.keys(setrikaStats).forEach(function(nama) {
-        excelData.push({
-            'No. Nota': nama,
-            'Pelanggan': setrikaStats[nama] + ' kg',
-            'Cabang': '',
-            'Status': '',
-            'Tgl Terima': '',
-            'Tgl Selesai': '',
-            'Jenis': '',
-            'Kg': '',
-            'Tgl Ambil': '',
-            'Tgl Bayar': '',
-            'Pembayaran': '',
-            'Nama Setrika': '',
-            'Harga': ''
-        });
-    });
     
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();

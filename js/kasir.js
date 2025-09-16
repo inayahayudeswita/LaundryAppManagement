@@ -1,6 +1,4 @@
-// ===============================
 // Global Variables
-// ===============================
 let onProgressData = [];
 let finishedData = [];
 let editIndex = null;
@@ -8,9 +6,7 @@ let finishIndex = null;
 let currentUser = null;
 let CABANG = '';
 
-// ===============================
 // Initialize User & Branch
-// ===============================
 function initializeUser() {
     const userData = sessionStorage.getItem("currentUser");
     if (userData) {
@@ -19,20 +15,49 @@ function initializeUser() {
         
         document.getElementById('currentUser').textContent = currentUser.name || currentUser.username;
         document.getElementById('currentBranch').textContent = CABANG;
+        
+        // SYNC DATA SAAT INITIALIZE
+        syncDataToAdmin();
     } else {
         window.location.href = 'login.html';
     }
 }
 
-// ===============================
+// Auto Number Generation System
+function generateAutoNumber(date = new Date()) {
+    const dateStr = formatDateForNumber(date);
+    const key = `autoNumber_${CABANG}_${dateStr}`;
+    
+    let currentNumber = parseInt(localStorage.getItem(key) || '0');
+    currentNumber++;
+    localStorage.setItem(key, currentNumber.toString());
+    
+    return `${dateStr}-${currentNumber.toString().padStart(3, '0')}`;
+}
+
+function formatDateForNumber(date) {
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}${month}${day}`;
+}
+
+function generateUID() {
+    const now = new Date();
+    const dateStr = formatDateForNumber(now);
+    const timeStr = now.getHours().toString().padStart(2, '0') + 
+                   now.getMinutes().toString().padStart(2, '0');
+    const randomStr = Math.random().toString(36).substr(2, 3).toUpperCase();
+    
+    return `${CABANG.replace(/\s/g, '').slice(0, 3).toUpperCase()}-${dateStr}-${timeStr}-${randomStr}`;
+}
+
 // Pricing Functions
-// ===============================
 function getServicePrices() {
     const savedPrices = localStorage.getItem('servicePrices');
     if (savedPrices) {
         return JSON.parse(savedPrices);
     }
-    // Default pricing jika belum ada di localStorage
     return {
         reg: 5000,
         exp1h: 15000,
@@ -46,6 +71,18 @@ function getServicePrices() {
 function getServicePrice(service) {
     const prices = getServicePrices();
     return prices[service] || 0;
+}
+
+function getServiceName(serviceCode) {
+    const serviceNames = {
+        reg: 'Regular',
+        exp1h: 'Express 1 Jam',
+        exp2h: 'Express 2 Jam',
+        cl: 'Cuci Lipat',
+        set: 'Setrika',
+        sat: 'Satuan'
+    };
+    return serviceNames[serviceCode] || serviceCode;
 }
 
 function calculatePrice() {
@@ -62,13 +99,7 @@ function calculatePrice() {
     }
 }
 
-// ===============================
 // Utility Functions
-// ===============================
-function generateUID() {
-    return 'UID-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-}
-
 function formatRupiah(amount) {
     return 'Rp ' + parseInt(amount).toLocaleString('id-ID');
 }
@@ -79,9 +110,128 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('id-ID');
 }
 
+// Receipt Generation
+function generateReceipt(data) {
+    const now = new Date();
+    const receiptContent = document.getElementById('receiptContent');
+    const receiptBranch = document.getElementById('receiptBranch');
+    
+    receiptBranch.textContent = CABANG;
+    
+    receiptContent.innerHTML = `
+        <div class="receipt-row">
+            <span>Tanggal:</span>
+            <span>${formatDate(now.toISOString().split('T')[0])}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Waktu:</span>
+            <span>${now.toLocaleTimeString('id-ID')}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Kasir:</span>
+            <span>${currentUser.name || currentUser.username}</span>
+        </div>
+        <div style="border-bottom: 1px dashed #333; margin: 10px 0;"></div>
+        <div class="receipt-row">
+            <span>No. Nota:</span>
+            <span>${data.nomorNota}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Pelanggan:</span>
+            <span>${data.namaPelanggan}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Jenis:</span>
+            <span>${getServiceName(data.jenisLaundry)}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Berat:</span>
+            <span>${data.jumlahKg} kg</span>
+        </div>
+        <div class="receipt-row">
+            <span>Harga/kg:</span>
+            <span>${formatRupiah(getServicePrice(data.jenisLaundry))}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Tgl Terima:</span>
+            <span>${formatDate(data.tanggalTerima)}</span>
+        </div>
+        <div class="receipt-row">
+            <span>Tgl Selesai:</span>
+            <span>${formatDate(data.tanggalSelesai)}</span>
+        </div>
+        <div class="receipt-total">
+            <div class="receipt-row">
+                <span>TOTAL:</span>
+                <span>${formatRupiah(data.harga)}</span>
+            </div>
+            <div class="receipt-row">
+                <span>Pembayaran:</span>
+                <span>${data.payment === 'none' ? 'BELUM BAYAR' : data.payment.toUpperCase()}</span>
+            </div>
+        </div>
+        <div class="receipt-footer">
+            <p>Terima kasih atas kepercayaan Anda</p>
+            <p>Barang hilang/rusak bukan tanggungan kami</p>
+            <p>Klaim max 3x24 jam</p>
+        </div>
+    `;
+}
+
+function showReceiptModal(data) {
+    generateReceipt(data);
+    document.getElementById('receiptModal').classList.add('show');
+}
+
+function hideReceiptModal() {
+    document.getElementById('receiptModal').classList.remove('show');
+}
+
+function printReceipt() {
+    window.print();
+}
+
 // ===============================
+// Data Sync untuk Admin - SISTEM BARU
+// ===============================
+function syncDataToAdmin() {
+    try {
+        // Ambil semua data onProgress dari semua cabang
+        const allOnProgressData = [];
+        const allFinishedData = [];
+        
+        // Loop semua keys di localStorage untuk mencari data cabang
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            
+            // Cari data onProgress per cabang
+            if (key && key.startsWith('onProgressData_')) {
+                const cabangData = JSON.parse(localStorage.getItem(key) || '[]');
+                allOnProgressData.push(...cabangData);
+            }
+            
+            // Cari data finished per cabang  
+            if (key && key.startsWith('finishedData_')) {
+                const cabangData = JSON.parse(localStorage.getItem(key) || '[]');
+                allFinishedData.push(...cabangData);
+            }
+        }
+        
+        // Simpan data gabungan untuk admin
+        localStorage.setItem('allOnProgressData', JSON.stringify(allOnProgressData));
+        localStorage.setItem('allFinishedData', JSON.stringify(allFinishedData));
+        
+        console.log('Data synced to admin:', {
+            onProgress: allOnProgressData.length,
+            finished: allFinishedData.length
+        });
+        
+    } catch (error) {
+        console.error('Error syncing data to admin:', error);
+    }
+}
+
 // Initialize App
-// ===============================
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
     loadData();
@@ -99,14 +249,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('finishTanggalBayar').value = today;
     }
     
-    // Add event listeners for price calculation
     document.getElementById('jenisLaundry').addEventListener('change', calculatePrice);
     document.getElementById('jumlahKg').addEventListener('input', calculatePrice);
 });
 
-// ===============================
-// Data Management
-// ===============================
+// Data Management - DIUPDATE DENGAN SYNC
 function loadData() {
     const onProgressKey = `onProgressData_${CABANG}`;
     const finishedKey = `finishedData_${CABANG}`;
@@ -116,8 +263,9 @@ function loadData() {
     
     if (savedOnProgress) onProgressData = JSON.parse(savedOnProgress);
     if (savedFinished) finishedData = JSON.parse(savedFinished);
-
-    saveToGlobalStorage();
+    
+    // Sync data setelah load
+    syncDataToAdmin();
 }
 
 function saveDataLocal() {
@@ -127,30 +275,11 @@ function saveDataLocal() {
     localStorage.setItem(onProgressKey, JSON.stringify(onProgressData));
     localStorage.setItem(finishedKey, JSON.stringify(finishedData));
     
-    saveToGlobalStorage();
+    // SYNC KE ADMIN SETIAP KALI SAVE
+    syncDataToAdmin();
 }
 
-function saveToGlobalStorage() {
-    let allOnProgress = [];
-    let allFinished = [];
-    
-    const branches = ['Cabang 1', 'Cabang 2'];
-    
-    branches.forEach(branch => {
-        const branchOnProgress = JSON.parse(localStorage.getItem(`onProgressData_${branch}`) || '[]');
-        const branchFinished = JSON.parse(localStorage.getItem(`finishedData_${branch}`) || '[]');
-        
-        allOnProgress = allOnProgress.concat(branchOnProgress);
-        allFinished = allFinished.concat(branchFinished);
-    });
-    
-    localStorage.setItem('allOnProgressData', JSON.stringify(allOnProgress));
-    localStorage.setItem('allFinishedData', JSON.stringify(allFinished));
-}
-
-// ===============================
 // Tab Management
-// ===============================
 function switchTab(tab) {
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
@@ -159,42 +288,32 @@ function switchTab(tab) {
     document.getElementById(`${tab}-tab`).classList.add('active');
 }
 
-// ===============================
-// Count Management
-// ===============================
 function updateCounts() {
     document.getElementById('onProgressCount').textContent = onProgressData.length;
     document.getElementById('finishedCount').textContent = finishedData.length;
 }
 
-// ===============================
-// Payment Management Functions - DIPERBAIKI
-// ===============================
+// Payment Management
 function selectPayment(method, context) {
-    // Reset semua pilihan payment dulu
     if (context === 'form') {
-        // Reset untuk form modal
         const formOptions = document.querySelectorAll('#formModal .payment-option');
         const formRadios = document.querySelectorAll('input[name="formPayment"]');
         
         formOptions.forEach(option => option.classList.remove('selected'));
         formRadios.forEach(radio => radio.checked = false);
         
-        // Set yang dipilih
         const selectedRadio = document.querySelector(`input[name="formPayment"][value="${method}"]`);
         if (selectedRadio) {
             selectedRadio.checked = true;
             selectedRadio.closest('.payment-option').classList.add('selected');
         }
     } else if (context === 'finish') {
-        // Reset untuk finish modal
         const finishOptions = document.querySelectorAll('#finishModal .payment-option');
         const finishRadios = document.querySelectorAll('input[name="payment"]');
         
         finishOptions.forEach(option => option.classList.remove('selected'));
         finishRadios.forEach(radio => radio.checked = false);
         
-        // Set yang dipilih
         const selectedRadio = document.querySelector(`input[name="payment"][value="${method}"]`);
         if (selectedRadio) {
             selectedRadio.checked = true;
@@ -203,9 +322,7 @@ function selectPayment(method, context) {
     }
 }
 
-// ===============================
-// Table Rendering - DIPERBAIKI
-// ===============================
+// Table Rendering
 function renderOnProgressTable() {
     const tbody = document.getElementById('onProgressTable');
     
@@ -215,7 +332,6 @@ function renderOnProgressTable() {
     }
 
     tbody.innerHTML = onProgressData.map((item, index) => {
-        // Fix payment status display
         let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
         if (item.payment && item.payment !== 'none') {
             paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
@@ -234,8 +350,15 @@ function renderOnProgressTable() {
                 <td>${paymentDisplay}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon edit" onclick="editData(${index})" title="Edit"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon finish" onclick="showFinishForm(${index})" title="Selesai"><i class="fas fa-check"></i></button>
+                        <button class="btn-icon print" onclick="showReceiptModal(onProgressData[${index}])" title="Cetak">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button class="btn-icon edit" onclick="editData(${index})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon finish" onclick="showFinishForm(${index})" title="Selesai">
+                            <i class="fas fa-check"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -247,7 +370,7 @@ function renderFinishedTable() {
     const tbody = document.getElementById('finishedTable');
     
     if (finishedData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Tidak ada data finished</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
         return;
     }
 
@@ -263,24 +386,28 @@ function renderFinishedTable() {
             <td>${formatDate(item.tanggalAmbil)}</td>
             <td>${formatDate(item.tanggalBayar)}</td>
             <td><span class="jenis-badge">${item.metodePembayaran?.toUpperCase()}</span></td>
-            <td>${item.namaSetrika || '-'}</td>
             <td><span class="currency">${formatRupiah(item.harga)}</span></td>
             <td>
-                <button class="btn-icon edit" onclick="editFinishedData('${item.uid}')" title="Edit"><i class="fas fa-edit"></i></button>
+                <div class="action-buttons">
+                    <button class="btn-icon print" onclick="showReceiptModal(finishedData.find(x => x.uid === '${item.uid}'))" title="Cetak">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
 }
 
-// ===============================
-// Form Management - DIPERBAIKI
-// ===============================
+// Form Management
 function showForm() {
     document.getElementById('modalTitle').textContent = 'Tambah Data Laundry';
     document.getElementById('saveButtonText').textContent = 'Simpan';
     clearForm();
     document.getElementById('formModal').classList.add('show');
     editIndex = null;
+    
+    const autoNumber = generateAutoNumber();
+    document.getElementById('nomorNota').value = autoNumber;
 }
 
 function hideForm() {
@@ -296,19 +423,17 @@ function clearForm() {
     document.getElementById('jumlahKg').value = '';
     document.getElementById('harga').value = '';
     
-    // Reset payment options - Default ke "Belum Bayar"
+    // Reset payment options - Default "Belum Bayar"
     const formOptions = document.querySelectorAll('#formModal .payment-option');
     const formRadios = document.querySelectorAll('input[name="formPayment"]');
     
     formOptions.forEach(option => option.classList.remove('selected'));
     formRadios.forEach(radio => radio.checked = false);
     
-    // Set default "none" (Belum Bayar)
-    const noneOption = document.querySelector('#formModal .payment-option');
     const noneRadio = document.querySelector('input[name="formPayment"][value="none"]');
     if (noneRadio) {
         noneRadio.checked = true;
-        noneOption.classList.add('selected');
+        noneRadio.closest('.payment-option').classList.add('selected');
     }
 }
 
@@ -321,7 +446,6 @@ function saveData() {
     const jumlahKg = parseFloat(document.getElementById('jumlahKg').value);
     const harga = parseInt(document.getElementById('harga').value);
 
-    // Get payment info - DIPERBAIKI
     const paymentRadio = document.querySelector('input[name="formPayment"]:checked');
     const payment = paymentRadio ? paymentRadio.value : 'none';
 
@@ -339,7 +463,7 @@ function saveData() {
         jenisLaundry, 
         jumlahKg, 
         harga,
-        payment, // Pastikan payment selalu tersimpan
+        payment,
         cabang: CABANG,
         createdAt: editIndex !== null ? onProgressData[editIndex].createdAt : new Date().toISOString()
     };
@@ -349,6 +473,8 @@ function saveData() {
         editIndex = null;
     } else {
         onProgressData.push(data);
+        // Auto show receipt for new entries
+        setTimeout(() => showReceiptModal(data), 500);
     }
 
     saveDataLocal();
@@ -372,14 +498,13 @@ function editData(index) {
     document.getElementById('jumlahKg').value = data.jumlahKg;
     document.getElementById('harga').value = data.harga;
     
-    // Reset semua payment options dulu
+    // Set payment options
     const formOptions = document.querySelectorAll('#formModal .payment-option');
     const formRadios = document.querySelectorAll('input[name="formPayment"]');
     
     formOptions.forEach(option => option.classList.remove('selected'));
     formRadios.forEach(radio => radio.checked = false);
     
-    // Set payment data yang ada
     const paymentValue = data.payment || 'none';
     const paymentRadio = document.querySelector(`input[name="formPayment"][value="${paymentValue}"]`);
     if (paymentRadio) {
@@ -391,72 +516,7 @@ function editData(index) {
     document.getElementById('formModal').classList.add('show');
 }
 
-function deleteData(index) {
-    if (confirm('Yakin hapus data ini?')) {
-        onProgressData.splice(index, 1);
-        saveDataLocal();
-        updateCounts();
-        renderOnProgressTable();
-    }
-}
-
-function editFinishedData(uid) {
-    const item = finishedData.find(data => data.uid === uid);
-    if (!item) return;
-
-    // Isi modal dengan data lama
-    document.getElementById('finishTanggalAmbil').value = item.tanggalAmbil || new Date().toISOString().split('T')[0];
-    document.getElementById('finishTanggalBayar').value = item.tanggalBayar || new Date().toISOString().split('T')[0];
-    document.getElementById('finishNamaSetrika').value = item.namaSetrika || '';
-
-    // Reset payment options
-    const finishOptions = document.querySelectorAll('#finishModal .payment-option');
-    const finishRadios = document.querySelectorAll('input[name="payment"]');
-    finishOptions.forEach(option => option.classList.remove('selected'));
-    finishRadios.forEach(radio => radio.checked = false);
-
-    // Set metode pembayaran lama
-    if (item.metodePembayaran) {
-        const paymentRadio = document.querySelector(`input[name="payment"][value="${item.metodePembayaran}"]`);
-        if (paymentRadio) {
-            paymentRadio.checked = true;
-            paymentRadio.closest('.payment-option').classList.add('selected');
-        }
-    }
-
-    // Simpan index editing
-    finishIndex = finishedData.findIndex(data => data.uid === uid);
-
-    // Tampilkan modal
-    document.getElementById('finishModal').classList.add('show');
-}
-
-
-// ===============================
-// Finish Management - DIPERBAIKI
-// ===============================
-function showPaymentInfo(paymentMethod) {
-    // Remove existing payment info if any
-    const existingInfo = document.querySelector('.payment-already-made-info');
-    if (existingInfo) {
-        existingInfo.remove();
-    }
-    
-    // Create info element
-    const paymentGroup = document.querySelector('#finishModal .form-group:has([name="payment"])');
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'payment-already-made-info';
-    infoDiv.innerHTML = `
-        <div style="background: #d1fae5; color: #065f46; padding: 8px 12px; border-radius: 6px; margin-top: 8px; font-size: 14px;">
-            <i class="fas fa-check-circle"></i> Pembayaran sudah dilakukan via <strong>${paymentMethod.toUpperCase()}</strong>
-        </div>
-    `;
-    
-    if (paymentGroup) {
-        paymentGroup.appendChild(infoDiv);
-    }
-}
-
+// Finish Management
 function showFinishForm(index) {
     finishIndex = index;
     const data = onProgressData[index];
@@ -464,36 +524,18 @@ function showFinishForm(index) {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('finishTanggalAmbil').value = today;
     document.getElementById('finishTanggalBayar').value = today;
-    document.getElementById('finishNamaSetrika').value = '';
     
-    // Reset semua payment options di finish modal
     const finishOptions = document.querySelectorAll('#finishModal .payment-option');
     const finishRadios = document.querySelectorAll('input[name="payment"]');
     
-    finishOptions.forEach(option => {
-        option.classList.remove('selected');
-        option.classList.remove('disabled');
-    });
-    finishRadios.forEach(input => {
-        input.checked = false;
-        input.disabled = false;
-    });
+    finishOptions.forEach(option => option.classList.remove('selected'));
+    finishRadios.forEach(radio => radio.checked = false);
     
-    // Hapus info pembayaran lama jika ada
-    const existingInfo = document.querySelector('.payment-already-made-info');
-    if (existingInfo) {
-        existingInfo.remove();
-    }
-    
-    // Jika sudah ada pembayaran sebelumnya, set sebagai default
     if (data.payment && data.payment !== 'none') {
         const existingPaymentRadio = document.querySelector(`input[name="payment"][value="${data.payment}"]`);
         if (existingPaymentRadio) {
             existingPaymentRadio.checked = true;
             existingPaymentRadio.closest('.payment-option').classList.add('selected');
-            
-            // Tampilkan info bahwa pembayaran sudah dilakukan
-            showPaymentInfo(data.payment);
         }
     }
     
@@ -508,53 +550,35 @@ function confirmFinish() {
     const tanggalAmbil = document.getElementById('finishTanggalAmbil').value;
     const tanggalBayar = document.getElementById('finishTanggalBayar').value;
     const metodePembayaran = document.querySelector('input[name="payment"]:checked')?.value;
-    const namaSetrika = document.getElementById('finishNamaSetrika').value;
 
     if (!tanggalAmbil || !tanggalBayar || !metodePembayaran) {
         alert('Lengkapi field yang wajib diisi!');
         return;
     }
 
-    if (finishIndex !== null && finishIndex < finishedData.length) {
-        // EDIT FINISHED DATA
-        finishedData[finishIndex] = {
-            ...finishedData[finishIndex],
-            tanggalAmbil,
-            tanggalBayar,
-            metodePembayaran,
-            namaSetrika,
-            updatedAt: new Date().toISOString()
-        };
-        alert('Data finished berhasil diperbarui!');
-    } else {
-        // PINDAH dari On Progress ke Finished
-        const data = onProgressData[finishIndex];
-        const finishedItem = { 
-            ...data, 
-            tanggalAmbil, 
-            tanggalBayar, 
-            metodePembayaran, 
-            namaSetrika,
-            finishedAt: new Date().toISOString()
-        };
-        
-        finishedData.push(finishedItem);
-        onProgressData.splice(finishIndex, 1);
-        alert('Laundry berhasil diselesaikan!');
-    }
+    const data = onProgressData[finishIndex];
+    const finishedItem = { 
+        ...data, 
+        tanggalAmbil, 
+        tanggalBayar, 
+        metodePembayaran, 
+        finishedAt: new Date().toISOString()
+    };
+    
+    finishedData.push(finishedItem);
+    onProgressData.splice(finishIndex, 1);
     
     saveDataLocal();
     updateCounts();
     renderOnProgressTable();
     renderFinishedTable();
     hideFinishForm();
+    
+    alert('Laundry berhasil diselesaikan!');
     finishIndex = null;
 }
 
-
-// ===============================
 // Search Functions
-// ===============================
 function performSearch(type) {
     const searchInput = type === 'onprogress' ? 
         document.getElementById('searchOnProgress') : 
@@ -563,40 +587,75 @@ function performSearch(type) {
     const searchTerm = searchInput.value.toLowerCase();
     
     if (type === 'onprogress') {
-        const filteredData = onProgressData.filter(item => 
-            item.nomorNota.toLowerCase().includes(searchTerm) ||
-            item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-            item.jenisLaundry.toLowerCase().includes(searchTerm)
-        );
-        renderFilteredOnProgressTable(filteredData);
+        if (searchTerm === '') {
+            renderOnProgressTable();
+        } else {
+            const filteredData = onProgressData.filter(item => 
+                item.nomorNota.toLowerCase().includes(searchTerm) ||
+                item.namaPelanggan.toLowerCase().includes(searchTerm) ||
+                item.jenisLaundry.toLowerCase().includes(searchTerm)
+            );
+            renderFilteredTable(filteredData, 'onProgressTable', 10);
+        }
     } else {
-        const filteredData = finishedData.filter(item =>
-            item.nomorNota.toLowerCase().includes(searchTerm) ||
-            item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-            item.jenisLaundry.toLowerCase().includes(searchTerm)
-        );
-        renderFilteredFinishedTable(filteredData);
+        if (searchTerm === '') {
+            renderFinishedTable();
+        } else {
+            const filteredData = finishedData.filter(item =>
+                item.nomorNota.toLowerCase().includes(searchTerm) ||
+                item.namaPelanggan.toLowerCase().includes(searchTerm) ||
+                item.jenisLaundry.toLowerCase().includes(searchTerm)
+            );
+            renderFilteredTable(filteredData, 'finishedTable', 12);
+        }
     }
 }
 
-function renderFilteredOnProgressTable(data) {
-    const tbody = document.getElementById('onProgressTable');
+function renderFilteredTable(data, tableId, colspan) {
+    const tbody = document.getElementById(tableId);
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Data tidak ditemukan</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">Data tidak ditemukan</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = data.map((item, index) => {
-        const originalIndex = onProgressData.indexOf(item);
-        
-        // Fix payment status display
-        let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
-        if (item.payment && item.payment !== 'none') {
-            paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
-        }
-        
-        return `
+    if (tableId === 'onProgressTable') {
+        tbody.innerHTML = data.map(item => {
+            const originalIndex = onProgressData.indexOf(item);
+            let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
+            if (item.payment && item.payment !== 'none') {
+                paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
+            }
+            
+            return `
+                <tr>
+                    <td><span class="nota-code">${item.uid}</span></td>
+                    <td><span class="nota-code">${item.nomorNota}</span></td>
+                    <td>${item.namaPelanggan}</td>
+                    <td>${formatDate(item.tanggalTerima)}</td>
+                    <td>${formatDate(item.tanggalSelesai)}</td>
+                    <td><span class="jenis-badge">${item.jenisLaundry}</span></td>
+                    <td>${item.jumlahKg} kg</td>
+                    <td><span class="currency">${formatRupiah(item.harga)}</span></td>
+                    <td>${paymentDisplay}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-icon print" onclick="showReceiptModal(onProgressData[${originalIndex}])" title="Cetak">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button class="btn-icon edit" onclick="editData(${originalIndex})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon finish" onclick="showFinishForm(${originalIndex})" title="Selesai">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        tbody.innerHTML = data.map(item => `
             <tr>
                 <td><span class="nota-code">${item.uid}</span></td>
                 <td><span class="nota-code">${item.nomorNota}</span></td>
@@ -605,57 +664,33 @@ function renderFilteredOnProgressTable(data) {
                 <td>${formatDate(item.tanggalSelesai)}</td>
                 <td><span class="jenis-badge">${item.jenisLaundry}</span></td>
                 <td>${item.jumlahKg} kg</td>
+                <td>${formatDate(item.tanggalAmbil)}</td>
+                <td>${formatDate(item.tanggalBayar)}</td>
+                <td><span class="jenis-badge">${item.metodePembayaran?.toUpperCase()}</span></td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
-                <td>${paymentDisplay}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon edit" onclick="editData(${originalIndex})"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon finish" onclick="showFinishForm(${originalIndex})"><i class="fas fa-check"></i></button>
-                        <button class="btn-icon delete" onclick="deleteData(${originalIndex})"><i class="fas fa-trash"></i></button>
+                        <button class="btn-icon print" onclick="showReceiptModal(finishedData.find(x => x.uid === '${item.uid}'))" title="Cetak">
+                            <i class="fas fa-print"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
-        `;
-    }).join('');
-}
-
-function renderFilteredFinishedTable(data) {
-    const tbody = document.getElementById('finishedTable');
-    
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Data tidak ditemukan</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = data.map(item => `
-        <tr>
-            <td><span class="nota-code">${item.uid}</span></td>
-            <td><span class="nota-code">${item.nomorNota}</span></td>
-            <td>${item.namaPelanggan}</td>
-            <td>${formatDate(item.tanggalTerima)}</td>
-            <td>${formatDate(item.tanggalSelesai)}</td>
-            <td><span class="jenis-badge">${item.jenisLaundry}</span></td>
-            <td>${item.jumlahKg} kg</td>
-            <td>${formatDate(item.tanggalAmbil)}</td>
-            <td>${formatDate(item.tanggalBayar)}</td>
-            <td><span class="jenis-badge">${item.metodePembayaran?.toUpperCase()}</span></td>
-            <td>${item.namaSetrika || '-'}</td>
-            <td><span class="currency">${formatRupiah(item.harga)}</span></td>
-            <td>
-                <button class="btn-icon delete" onclick="deleteFinishedData('${item.uid}')"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-
-function logout() {
-    sessionStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
-}
-
-function checkAuth() {
-    if (!sessionStorage.getItem('currentUser')) {
-        window.location.href = 'login.html';
+        `).join('');
     }
 }
+
+// ===============================
+// Auto Sync Berkala - TAMBAHAN
+// ===============================
+setInterval(function() {
+    syncDataToAdmin();
+}, 10000); // Sync setiap 10 detik
+
+// Event listener untuk perubahan data di tab lain
+window.addEventListener('storage', function(e) {
+    if (e.key && (e.key.startsWith('onProgressData_') || e.key.startsWith('finishedData_'))) {
+        console.log('Storage changed, syncing data to admin...');
+        syncDataToAdmin();
+    }
+});
