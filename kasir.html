@@ -30,7 +30,7 @@
             </button>
         </div>
 
-        <!-- On Progress Tab -->
+        <!-- On Progress Tab -->w
         <div id="onprogress-tab" class="tab-content active">
             <div class="panel">
                 <div class="panel-header">
@@ -119,7 +119,7 @@
         </div>
 
         <!-- Add/Edit Form Modal -->
-        <div id="formModal" class="modal">
+         <div id="formModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 id="modalTitle">Tambah Data Laundry</h3>
@@ -147,16 +147,28 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Jenis Laundry</label>
-                        <select id="jenisLaundry" class="form-input" required>
-                            <option value="">Pilih Jenis</option>
-                            <option value="reg">Regular</option>
-                            <option value="exp1h">Express 1 Jam</option>
-                            <option value="exp2h">Express 2 Jam</option>
-                            <option value="cl">Cuci Lipat</option>
-                            <option value="set">Setrika</option>
-                            <option value="sat">Satuan</option>
+                        <label class="form-label">Nama Layanan</label>
+                        <select id="serviceName" class="form-input" required>
+                            <option value="">Pilih Layanan</option>
+                            <!-- Options will be populated dynamically from database -->
                         </select>
+                        <div class="price-info">
+                            <i class="fas fa-info-circle"></i> Layanan diambil dari database admin
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jenis Service</label>
+                        <select id="jenisLaundry" class="form-input" required disabled>
+                            <option value="">Pilih Jenis Service</option>
+                            <!-- Contoh hasil JS setelah load -->
+                            <option value="2" data-name="Regular">Regular</option>
+                            <option value="3" data-name="Exp 2 Hari">Exp 2 Hari</option>
+                            <option value="4" data-name="Exp 1 Hari">Exp 1 Hari</option>
+                            <option value="5" data-name="Exp 6 Jam">Exp 6 Jam</option>
+                        </select>
+                        <div class="price-info">
+                            <i class="fas fa-info-circle"></i> Pilih layanan terlebih dahulu untuk melihat jenis yang tersedia
+                        </div>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
@@ -205,6 +217,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Finish Modal -->
         <div id="finishModal" class="modal">
