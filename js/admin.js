@@ -79,6 +79,7 @@ function formatDate(dateStr) {
 // Initialize App
 // ===============================
 document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function() {
     checkAuth();
     await loadBranches(); 
     await loadServicePricing(); 
@@ -112,6 +113,7 @@ function logout() {
 }
 
 // ===============================
+// Service Pricing Management
 // Service Pricing Management
 // ===============================
 
@@ -244,7 +246,13 @@ function updatePricingStats() {
 function togglePricingTable() {
     const container = document.getElementById('pricingTableContainer');
     const toggleIcon = document.getElementById('pricingToggle');
+    const toggleIcon = document.getElementById('pricingToggle');
     
+    if (!container || !toggleIcon) return;
+    
+    tableVisible = !tableVisible;
+    
+    if (tableVisible) {
     if (!container || !toggleIcon) return;
     
     tableVisible = !tableVisible;
@@ -252,8 +260,10 @@ function togglePricingTable() {
     if (tableVisible) {
         container.style.display = 'block';
         toggleIcon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-up"></i>';
     } else {
         container.style.display = 'none';
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
         toggleIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
     }
 }
@@ -332,7 +342,82 @@ async function deleteService(serviceId) {
         if (result.success) {
             alert('Layanan berhasil dihapus!');
             loadServicePricing(); // Reload data
+// Modal functions for adding new service
+function openAddServiceModal() {
+    const modal = document.getElementById('addServiceModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+function closeAddServiceModal() {
+    const modal = document.getElementById('addServiceModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('addServiceForm').reset();
+    }
+}
+
+// Handle add service form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const addServiceForm = document.getElementById('addServiceForm');
+    if (addServiceForm) {
+        addServiceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const serviceData = {
+                service_name: formData.get('service_name'),
+                regular: parseInt(formData.get('regular')) || 0,
+                exp2: parseInt(formData.get('exp2')) || 0,
+                exp1: parseInt(formData.get('exp1')) || 0,
+                exp6: parseInt(formData.get('exp6')) || 0
+            };
+            
+            try {
+                const response = await fetch('backend/save_service.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(serviceData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Layanan berhasil ditambahkan!');
+                    closeAddServiceModal();
+                    loadServicePricing(); // Reload data
+                } else {
+                    alert('Gagal menambahkan layanan: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error adding service:', error);
+                alert('Terjadi kesalahan saat menambahkan layanan');
+            }
+        });
+    }
+});
+
+// Delete service function
+async function deleteService(serviceId) {
+    if (!confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('backend/delete_service.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service_id: serviceId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Layanan berhasil dihapus!');
+            loadServicePricing(); // Reload data
         } else {
+            alert('Gagal menghapus layanan: ' + result.message);
             alert('Gagal menghapus layanan: ' + result.message);
         }
     } catch (error) {
@@ -383,7 +468,63 @@ function getServicePriceByIdCategory(serviceId, categoryId) {
 
 // ===============================
 // Data Management - FETCH FROM DATABASE
+// Data Management - FETCH FROM DATABASE
 // ===============================
+async function loadData() {
+    try {
+        console.log('Loading data from database...');
+        const response = await fetch('backend/get_orders.php');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            console.error('Failed to load data:', result.message);
+            allData = [];
+            alert('Gagal memuat data: ' + result.message);
+            return;
+        }
+        
+        // Transform data dari database ke format yang dibutuhkan admin
+        allData = result.data.map(function(item) {
+            return {
+                uid: item.uid,
+                nomorNota: item.nomorNota,
+                namaPelanggan: item.namaPelanggan,
+                cabang: item.cabang || 'Unknown',
+                status: item.status === 'finished' ? 'Finished' : 'On Progress',
+                tanggalTerima: item.tanggalTerima,
+                tanggalSelesai: item.tanggalSelesai,
+                jenisLaundry: (item.serviceName || 'Unknown Service') + 
+                             (item.categoryName ? ' - ' + item.categoryName : ''),
+                jumlahKg: parseFloat(item.jumlahKg) || 0,
+                harga: parseInt(item.harga) || 0,
+                tanggalAmbil: item.tanggalAmbil || '-',
+                tanggalBayar: item.tanggalBayar || '-',
+                metodePembayaran: (item.payment && item.payment !== 'none') ? item.payment : 'belum bayar',
+                payment: item.payment,
+                createdAt: item.createdAt,
+                finishedAt: item.finishedAt,
+                serviceId: item.serviceId,
+                categoryId: item.categoryId
+            };
+        });
+        
+        console.log('Data loaded from database:', allData.length, 'items');
+        
+        // Log sample data untuk debugging
+        if (allData.length > 0) {
+            console.log('Sample data:', allData[0]);
+        }
+        
+    } catch (error) {
+        console.error('Error loading data from database:', error);
+        allData = [];
+        alert('Gagal memuat data dari database: ' + error.message);
+    }
 async function loadData() {
     try {
         console.log('Loading data from database...');
@@ -443,14 +584,49 @@ async function loadData() {
 
 // ===============================
 // Statistics - UPDATED
+// Statistics - UPDATED
 // ===============================
 function updateStats() {
+    console.log('Updating stats with data:', allData.length, 'items');
+    
     console.log('Updating stats with data:', allData.length, 'items');
     
     const totalRevenue = allData
         .filter(function(item) { return item.status === 'Finished'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
     
+    const totalTransactions = allData.length;
+    const onProgressCount = allData.filter(function(item) { return item.status === 'On Progress'; }).length;
+    const finishedCount = allData.filter(function(item) { return item.status === 'Finished'; }).length;
+    
+    // Update revenue display
+    const revenueElement = document.getElementById('totalRevenue');
+    if (revenueElement) {
+        revenueElement.textContent = formatRupiah(totalRevenue);
+    }
+    
+    // Update other stats if elements exist
+    const totalTransElement = document.getElementById('totalTransactions');
+    if (totalTransElement) {
+        totalTransElement.textContent = totalTransactions;
+    }
+    
+    const onProgressElement = document.getElementById('onProgressCount');
+    if (onProgressElement) {
+        onProgressElement.textContent = onProgressCount;
+    }
+    
+    const finishedElement = document.getElementById('finishedCount');
+    if (finishedElement) {
+        finishedElement.textContent = finishedCount;
+    }
+    
+    console.log('Stats updated:', {
+        totalRevenue: formatRupiah(totalRevenue),
+        totalTransactions,
+        onProgressCount,
+        finishedCount
+    });
     const totalTransactions = allData.length;
     const onProgressCount = allData.filter(function(item) { return item.status === 'On Progress'; }).length;
     const finishedCount = allData.filter(function(item) { return item.status === 'Finished'; }).length;
@@ -493,6 +669,10 @@ function applyFilters() {
     const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
     const selectedPeriod = document.getElementById('filterPeriod') ? document.getElementById('filterPeriod').value : 'all';
     const searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+    const selectedCabang = document.getElementById('filterCabang') ? document.getElementById('filterCabang').value : '';
+    const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
+    const selectedPeriod = document.getElementById('filterPeriod') ? document.getElementById('filterPeriod').value : 'all';
+    const searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
     
     filteredData = allData.filter(function(item) {
         if (selectedCabang && item.cabang !== selectedCabang) return false;
@@ -529,6 +709,8 @@ function applyFilters() {
                 item.jenisLaundry || '',
                 item.cabang || '',
                 item.uid || ''
+                item.cabang || '',
+                item.uid || ''
             ].map(function(field) { return field.toLowerCase(); });
             
             if (!searchFields.some(function(field) { return field.includes(searchTerm); })) return false;
@@ -553,6 +735,16 @@ function resetFilters() {
     if (filterPeriod) filterPeriod.value = 'all';
     if (searchInput) searchInput.value = '';
     
+    const filterCabang = document.getElementById('filterCabang');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterPeriod = document.getElementById('filterPeriod');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (filterCabang) filterCabang.value = '';
+    if (filterStatus) filterStatus.value = '';
+    if (filterPeriod) filterPeriod.value = 'all';
+    if (searchInput) searchInput.value = '';
+    
     applyFilters();
 }
 
@@ -562,9 +754,12 @@ function performSearch() {
 
 // ===============================
 // Table Rendering
+// Table Rendering
 // ===============================
 function renderTable() {
     const tbody = document.getElementById('dataTable');
+    if (!tbody) return;
+    
     if (!tbody) return;
     
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -573,6 +768,8 @@ function renderTable() {
     
     if (pageData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Tidak ada data untuk ditampilkan</td></tr>';
+        const dataCount = document.getElementById('dataCount');
+        if (dataCount) dataCount.textContent = 'Total: 0 data';
         const dataCount = document.getElementById('dataCount');
         if (dataCount) dataCount.textContent = 'Total: 0 data';
         return;
@@ -589,8 +786,21 @@ function renderTable() {
                 paymentDisplay = item.metodePembayaran.toUpperCase();
             }
         }
+        let paymentDisplay = 'BELUM BAYAR';
+        if (item.status === 'On Progress') {
+            if (item.payment && item.payment !== 'none') {
+                paymentDisplay = item.payment.toUpperCase();
+            }
+        } else if (item.status === 'Finished') {
+            if (item.metodePembayaran && item.metodePembayaran !== 'belum bayar' && item.metodePembayaran !== '-') {
+                paymentDisplay = item.metodePembayaran.toUpperCase();
+            }
+        }
         
         return '<tr>' +
+            '<td><span class="nota-code">' + (item.nomorNota || '-') + '</span></td>' +
+            '<td>' + (item.namaPelanggan || '-') + '</td>' +
+            '<td><span class="cabang-badge">' + (item.cabang || '-') + '</span></td>' +
             '<td><span class="nota-code">' + (item.nomorNota || '-') + '</span></td>' +
             '<td>' + (item.namaPelanggan || '-') + '</td>' +
             '<td><span class="cabang-badge">' + (item.cabang || '-') + '</span></td>' +
@@ -599,13 +809,18 @@ function renderTable() {
             '<td>' + formatDate(item.tanggalSelesai) + '</td>' +
             '<td><span class="jenis-badge">' + (item.jenisLaundry || '-') + '</span></td>' +
             '<td>' + (item.jumlahKg || 0) + ' kg</td>' +
+            '<td><span class="jenis-badge">' + (item.jenisLaundry || '-') + '</span></td>' +
+            '<td>' + (item.jumlahKg || 0) + ' kg</td>' +
             '<td>' + (item.tanggalAmbil !== '-' ? formatDate(item.tanggalAmbil) : '-') + '</td>' +
             '<td>' + (item.tanggalBayar !== '-' ? formatDate(item.tanggalBayar) : '-') + '</td>' +
             '<td>' + paymentDisplay + '</td>' +
             '<td><span class="currency">' + formatRupiah(item.harga || 0) + '</span></td>' +
+            '<td><span class="currency">' + formatRupiah(item.harga || 0) + '</span></td>' +
         '</tr>';
     }).join('');
     
+    const dataCount = document.getElementById('dataCount');
+    if (dataCount) dataCount.textContent = 'Total: ' + filteredData.length + ' data';
     const dataCount = document.getElementById('dataCount');
     if (dataCount) dataCount.textContent = 'Total: ' + filteredData.length + ' data';
 }
@@ -617,6 +832,8 @@ function updatePagination() {
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const paginationContainer = document.getElementById('pagination');
     const paginationInfo = document.getElementById('paginationInfo');
+    
+    if (!paginationContainer || !paginationInfo) return;
     
     if (!paginationContainer || !paginationInfo) return;
     
@@ -657,6 +874,7 @@ function goToPage(page) {
 
 // ===============================
 // Export Functions
+// Export Functions
 // ===============================
 function exportExcel() {
     if (filteredData.length === 0) {
@@ -679,9 +897,18 @@ function exportExcel() {
             'Tgl Selesai': item.tanggalSelesai || '-',
             'Jenis': item.jenisLaundry || '-',
             'Kg': item.jumlahKg || 0,
+            'No. Nota': item.nomorNota || '-',
+            'Pelanggan': item.namaPelanggan || '-',
+            'Cabang': item.cabang || '-',
+            'Status': item.status || '-',
+            'Tgl Terima': item.tanggalTerima || '-',
+            'Tgl Selesai': item.tanggalSelesai || '-',
+            'Jenis': item.jenisLaundry || '-',
+            'Kg': item.jumlahKg || 0,
             'Tgl Ambil': item.tanggalAmbil !== '-' ? item.tanggalAmbil : '',
             'Tgl Bayar': item.tanggalBayar !== '-' ? item.tanggalBayar : '',
             'Pembayaran': paymentExport,
+            'Harga': item.harga || 0
             'Harga': item.harga || 0
         };
     });
@@ -692,11 +919,17 @@ function exportExcel() {
     const totalHarga = filteredData
         .filter(function(item) { return item.status === 'Finished'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
+        .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
 
     const totalBelumBayar = filteredData
         .filter(function(item) { return !item.metodePembayaran || item.metodePembayaran === 'belum bayar' || item.metodePembayaran === '-'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
+        .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
     
+    // Add summary
+    excelData.push({}, {
+        'No. Nota': 'RINGKASAN LAPORAN'
+    }, {
     // Add summary
     excelData.push({}, {
         'No. Nota': 'RINGKASAN LAPORAN'
@@ -704,11 +937,16 @@ function exportExcel() {
         'No. Nota': 'Total On Progress',
         'Pelanggan': onProgressCount
     }, {
+        'Pelanggan': onProgressCount
+    }, {
         'No. Nota': 'Total Finished',
+        'Pelanggan': finishedCount
+    }, {
         'Pelanggan': finishedCount
     }, {
         'No. Nota': 'TOTAL BELUM BAYAR',
         'Harga': totalBelumBayar
+    }, {
     }, {
         'No. Nota': 'TOTAL PENDAPATAN',
         'Harga': totalHarga
@@ -724,7 +962,9 @@ function exportExcel() {
 
 // ===============================
 // Auto Refresh Data - UPDATED
+// Auto Refresh Data - UPDATED
 // ===============================
+setInterval(async function() {
 setInterval(async function() {
     const prevDataLength = allData.length;
     const prevBranchesLength = branchesData.length;
@@ -750,12 +990,18 @@ setInterval(async function() {
         console.log('Auto-refresh at:', new Date().toLocaleTimeString());
     }
 }, 30000); // Refresh every 30 seconds
+}, 30000); // Refresh every 30 seconds
 
 // ===============================
+// Global Functions
 // Global Functions
 // ===============================
 window.getServicePrices = getServicePrices;
 window.getServicePrice = getServicePrice;
+window.getServicePriceByCategory = getServicePriceByCategory;
+window.togglePricingTable = togglePricingTable;
+window.openAddServiceModal = openAddServiceModal;
+window.closeAddServiceModal = closeAddServiceModal;
 window.getServicePriceByCategory = getServicePriceByCategory;
 window.togglePricingTable = togglePricingTable;
 window.openAddServiceModal = openAddServiceModal;

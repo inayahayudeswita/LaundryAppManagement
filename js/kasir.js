@@ -9,6 +9,11 @@ let servicesData = [];
 let currentFinishUid = null;
 let ordersData = []; // Global variable to store orders data
 let editingUid = null;
+// Service data from database
+let servicesData = [];
+let currentFinishUid = null;
+let ordersData = []; // Global variable to store orders data
+let editingUid = null;
 // Initialize User & Branch
 function initializeUser() {
     const userData = sessionStorage.getItem("currentUser");
@@ -384,7 +389,12 @@ function generateReceipt(data) {
             <span>${serviceName}</span>
         </div>
         <div class="receipt-row">
+            <span>Layanan:</span>
+            <span>${serviceName}</span>
+        </div>
+        <div class="receipt-row">
             <span>Jenis:</span>
+            <span>${categoryName}</span>
             <span>${categoryName}</span>
         </div>
         <div class="receipt-row">
@@ -393,6 +403,7 @@ function generateReceipt(data) {
         </div>
         <div class="receipt-row">
             <span>Harga/kg:</span>
+            <span>${formatRupiah(pricePerKg)}</span>
             <span>${formatRupiah(pricePerKg)}</span>
         </div>
         <div class="receipt-row">
@@ -435,6 +446,7 @@ function printReceipt() {
 
 // ===============================
 // Data Sync untuk Admin
+// Data Sync untuk Admin
 // ===============================
 function syncDataToAdmin() {
     try {
@@ -471,12 +483,18 @@ function syncDataToAdmin() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', async function() {
     await loadServices(); // Load services first
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadServices(); // Load services first
     initializeUser();
+    await loadOrders();
+
+    // set default tanggal hari ini
     await loadOrders();
 
     // set default tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalTerima').value = today;
+
 
     if (document.getElementById('finishTanggalAmbil')) {
         document.getElementById('finishTanggalAmbil').value = today;
@@ -484,6 +502,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (document.getElementById('finishTanggalBayar')) {
         document.getElementById('finishTanggalBayar').value = today;
     }
+
+    // Event listeners
+    document.getElementById('serviceName').addEventListener('change', updateCategoryOptions);
 
     // Event listeners
     document.getElementById('serviceName').addEventListener('change', updateCategoryOptions);
@@ -500,6 +521,9 @@ function switchTab(tab) {
     document.getElementById(`${tab}-tab`).classList.add('active');
 }
 
+function updateCounts(onProgressCount, finishedCount) {
+    document.getElementById('onProgressCount').textContent = onProgressCount || 0;
+    document.getElementById('finishedCount').textContent = finishedCount || 0;
 function updateCounts(onProgressCount, finishedCount) {
     document.getElementById('onProgressCount').textContent = onProgressCount || 0;
     document.getElementById('finishedCount').textContent = finishedCount || 0;
@@ -538,12 +562,18 @@ function selectPayment(method, context) {
 // TABLE RENDERING - UPDATED
 // ===============================
 function renderOnProgressTable(data) {
+// ===============================
+// TABLE RENDERING - UPDATED
+// ===============================
+function renderOnProgressTable(data) {
     const tbody = document.getElementById('onProgressTable');
+    if (!data || data.length === 0) {
     if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data on progress</td></tr>';
         return;
     }
 
+    tbody.innerHTML = data.map((item) => {
     tbody.innerHTML = data.map((item) => {
         let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
         if (item.payment && item.payment !== 'none') {
@@ -569,17 +599,23 @@ function renderOnProgressTable(data) {
                 <td>${formatDate(item.tanggalTerima)}</td>
                 <td>${formatDate(item.tanggalSelesai)}</td>
                 <td><span class="jenis-badge">${serviceName} - ${categoryName}</span></td>
+                <td><span class="jenis-badge">${serviceName} - ${categoryName}</span></td>
                 <td>${item.jumlahKg} kg</td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>${paymentDisplay}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak">
+                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak">
                             <i class="fas fa-print"></i>
                         </button>
                         <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit">
+                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button class="btn-icon finish" 
+                                onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
+                                title="Selesai">
                         <button class="btn-icon finish" 
                                 onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
                                 title="Selesai">
@@ -594,7 +630,10 @@ function renderOnProgressTable(data) {
 
 
 function renderFinishedTable(orders) {
+
+function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
+    if (!orders || orders.length === 0) {
     if (!orders || orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
         return;
@@ -645,6 +684,14 @@ function printFinishedOrder(order) {
 // ===============================
 // FORM MANAGEMENT - UPDATED
 // ===============================
+
+function printFinishedOrder(order) {
+    showReceiptModal(order);
+}
+
+// ===============================
+// FORM MANAGEMENT - UPDATED
+// ===============================
 function showForm() {
     const modal = document.getElementById('formModal');
     modal.dataset.uid = "";  // Clear uid for add mode
@@ -652,7 +699,14 @@ function showForm() {
     document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
     document.getElementById('saveButtonText').textContent = "Simpan";
     
+    const modal = document.getElementById('formModal');
+    modal.dataset.uid = "";  // Clear uid for add mode
+    
+    document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
+    document.getElementById('saveButtonText').textContent = "Simpan";
+    
     clearForm();
+    modal.classList.add('show');
     modal.classList.add('show');
 }
 
@@ -662,11 +716,14 @@ function hideForm() {
 
 function clearForm() {
     document.getElementById('nomorNota').value = generateAutoNumber();
+    document.getElementById('nomorNota').value = generateAutoNumber();
     document.getElementById('namaPelanggan').value = '';
     document.getElementById('tanggalTerima').value = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalSelesai').value = '';
     document.getElementById('serviceName').value = '';
+    document.getElementById('serviceName').value = '';
     document.getElementById('jenisLaundry').value = '';
+    document.getElementById('jenisLaundry').disabled = true;
     document.getElementById('jenisLaundry').disabled = true;
     document.getElementById('jumlahKg').value = '';
     document.getElementById('harga').value = '';
@@ -706,7 +763,33 @@ async function saveData() {
         const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
         const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
         const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
+// ===============================
+// SAVE DATA - UPDATED
+// ===============================
+async function saveData() {
+    try {
+        const modal = document.getElementById('formModal');
+        const uidEdit = modal?.dataset?.uid || null; // kalau edit, modal dataset.uid di-set di editData()
+        const uid = uidEdit || generateUID();
 
+        const nomorNota = document.getElementById('nomorNota').value || generateAutoNumber();
+        const namaPelanggan = document.getElementById('namaPelanggan').value?.trim();
+        const tanggalTerima = document.getElementById('tanggalTerima').value;
+        const tanggalSelesai = document.getElementById('tanggalSelesai').value;
+        const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
+        const categorySelect = document.getElementById('jenisLaundry');
+        const categoryId = parseInt(categorySelect?.value || 0);
+        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || '';
+        const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
+        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
+        const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
+        const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
+
+        // Validasi
+        if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
+            alert('Lengkapi semua field yang wajib diisi!');
+            return;
+        }
         // Validasi
         if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
             alert('Lengkapi semua field yang wajib diisi!');
@@ -864,6 +947,42 @@ function showFinishForm(uid, payment = null) {
     document.getElementById("finishTanggalBayar").value = today;
 
     // Reset payment options
+// ===============================
+// UPDATE ORDER STATUS
+// ===============================
+async function updateOrderStatus(uid, tanggalAmbil, tanggalBayar, payment) {
+    try {
+        const payload = { uid, tanggalAmbil, tanggalBayar, payment };
+        console.log("DEBUG: updateOrderStatus payload:", payload);
+
+        const res = await fetch("backend/update_order_status.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("HTTP error! status: " + res.status);
+
+        const data = await res.json();
+        console.log("DEBUG: update_order_status.php response:", data);
+        return data;
+    } catch (err) {
+        console.error("updateOrderStatus error:", err);
+        throw err;
+    }
+}
+
+// ===============================
+// FINISH MANAGEMENT
+// ===============================
+function showFinishForm(uid, payment = null) {
+    currentFinishUid = uid;
+
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("finishTanggalAmbil").value = today;
+    document.getElementById("finishTanggalBayar").value = today;
+
+    // Reset payment options
     const finishOptions = document.querySelectorAll('#finishModal .payment-option');
     const finishRadios = document.querySelectorAll('input[name="payment"]');
     
@@ -875,11 +994,21 @@ function showFinishForm(uid, payment = null) {
         const existingPaymentRadio = document.querySelector(
             `input[name="payment"][value="${payment}"]`
         );
+    finishRadios.forEach(radio => (radio.checked = false));
+
+    // If there's existing payment, set as default
+    if (payment && payment !== "none") {
+        const existingPaymentRadio = document.querySelector(
+            `input[name="payment"][value="${payment}"]`
+        );
         if (existingPaymentRadio) {
             existingPaymentRadio.checked = true;
             existingPaymentRadio.closest(".payment-option").classList.add("selected");
+            existingPaymentRadio.closest(".payment-option").classList.add("selected");
         }
     }
+
+    document.getElementById("finishModal").classList.add("show");
 
     document.getElementById("finishModal").classList.add("show");
 }
@@ -896,13 +1025,50 @@ async function confirmFinish() {
 
     const tanggalAmbil = document.getElementById("finishTanggalAmbil").value;
     const tanggalBayar = document.getElementById("finishTanggalBayar").value;
+async function confirmFinish() {
+    if (!currentFinishUid) {
+        alert("Tidak ada order yang dipilih untuk diselesaikan.");
+        return;
+    }
+
+    const tanggalAmbil = document.getElementById("finishTanggalAmbil").value;
+    const tanggalBayar = document.getElementById("finishTanggalBayar").value;
     const metodePembayaran = document.querySelector('input[name="payment"]:checked')?.value;
 
     if (!tanggalAmbil || !tanggalBayar || !metodePembayaran) {
         alert("Lengkapi field yang wajib diisi!");
+        alert("Lengkapi field yang wajib diisi!");
         return;
     }
 
+    try {
+        const result = await updateOrderStatus(
+            currentFinishUid,
+            tanggalAmbil,
+            tanggalBayar,
+            metodePembayaran
+        );
+
+        console.log("Hasil update order:", result);
+
+        if (result.success) {
+            alert("Laundry berhasil diselesaikan & tersimpan di database!");
+            hideFinishForm();
+            await loadOrders(); // Refresh data from DB
+        } else {
+            alert("Gagal update ke database. Status tetap progress.");
+        }
+    } catch (err) {
+        console.error("Error confirmFinish:", err);
+        alert("Terjadi kesalahan saat update order.");
+    } finally {
+        currentFinishUid = null;
+    }
+}
+
+// ===============================
+// SEARCH FUNCTIONS
+// ===============================
     try {
         const result = await updateOrderStatus(
             currentFinishUid,
@@ -940,26 +1106,42 @@ function performSearch(type) {
     
     if (type === 'onprogress') {
         const allOnProgress = ordersData.filter(o => o.status === "progress");
+        const allOnProgress = ordersData.filter(o => o.status === "progress");
         if (searchTerm === '') {
             renderOnProgressTable(allOnProgress);
+            renderOnProgressTable(allOnProgress);
         } else {
+            const filteredData = allOnProgress.filter(item => 
             const filteredData = allOnProgress.filter(item => 
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
                 getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
+                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
+                item.uid.toLowerCase().includes(searchTerm) ||
+                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
             );
+            renderOnProgressTable(filteredData);
             renderOnProgressTable(filteredData);
         }
     } else {
         const allFinished = ordersData.filter(o => o.status === "finished");
+        const allFinished = ordersData.filter(o => o.status === "finished");
         if (searchTerm === '') {
+            renderFinishedTable(allFinished);
             renderFinishedTable(allFinished);
         } else {
             const filteredData = allFinished.filter(item =>
+            const filteredData = allFinished.filter(item =>
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
+                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
+                item.uid.toLowerCase().includes(searchTerm) ||
+                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
+            );
+            renderFinishedTable(filteredData);
+        }
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
                 getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
@@ -971,9 +1153,11 @@ function performSearch(type) {
 
 // ===============================
 // AUTO SYNC & STORAGE LISTENERS
+// AUTO SYNC & STORAGE LISTENERS
 // ===============================
 setInterval(function() {
     syncDataToAdmin();
+}, 10000); // Sync every 10 seconds
 }, 10000); // Sync every 10 seconds
 
 window.addEventListener('storage', function(e) {
