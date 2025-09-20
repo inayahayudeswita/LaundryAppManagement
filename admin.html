@@ -70,99 +70,55 @@
       </div>
     </div>
 
-    <!-- PRICING TABLE -->
+    <!-- ========== TABEL SERVICE BARU ========== -->
     <div class="pricing-table-container" id="pricingTableContainer">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h3 style="margin: 0; color: #2c3e50;">
-          <i class="fas fa-tags" style="color: #667eea; margin-right: 8px;"></i>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        <h3 style="margin:0;color:#2c3e50;">
+          <i class="fas fa-tags" style="color:#667eea;margin-right:8px;"></i>
           Kelola Harga Layanan
         </h3>
-        <button class="btn btn-primary" onclick="saveAllPrices()">
-          <i class="fas fa-save"></i> Simpan Semua
+        <button class="btn btn-success" onclick="openAddServiceModal()">
+          <i class="fas fa-plus"></i> Tambah Layanan
         </button>
       </div>
-      <table class="pricing-table">
+      <table class="pricing-table" id="servicesTable">
         <thead>
           <tr>
-            <th>Kode</th>
-            <th>Nama Layanan</th>
-            <th>Harga per Kg</th>
+            <th>Nama Service</th>
+            <th>Regular</th>
+            <th>Exp 2 Hari</th>
+            <th>Exp 1 Hari</th>
+            <th>Exp 6 Jam</th>
             <th>Aksi</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td><strong>REG</strong></td>
-            <td class="service-name">Regular</td>
-            <td>
-              <input type="number" class="price-input" id="price-reg" value="5000" min="0">
-            </td>
-            <td>
-              <div class="price-actions">
-                <button class="btn-save-price" onclick="savePrice('reg')">
-                  <i class="fas fa-save"></i> Simpan
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>EXP1H</strong></td>
-            <td class="service-name">Express 1 Jam</td>
-            <td>
-              <input type="number" class="price-input" id="price-exp1h" value="15000" min="0">
-            </td>
-            <td>
-              <div class="price-actions">
-                <button class="btn-save-price" onclick="savePrice('exp1h')">
-                  <i class="fas fa-save"></i> Simpan
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>EXP2H</strong></td>
-            <td class="service-name">Express 2 Jam</td>
-            <td>
-              <input type="number" class="price-input" id="price-exp2h" value="12000" min="0">
-            </td>
-            <td>
-              <div class="price-actions">
-                <button class="btn-save-price" onclick="savePrice('exp2h')">
-                  <i class="fas fa-save"></i> Simpan
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>CL</strong></td>
-            <td class="service-name">Cuci Lipat</td>
-            <td>
-              <input type="number" class="price-input" id="price-cl" value="7000" min="0">
-            </td>
-            <td>
-              <div class="price-actions">
-                <button class="btn-save-price" onclick="savePrice('cl')">
-                  <i class="fas fa-save"></i> Simpan
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>SAT</strong></td>
-            <td class="service-name">Satuan</td>
-            <td>
-              <input type="number" class="price-input" id="price-sat" value="10000" min="0">
-            </td>
-            <td>
-              <div class="price-actions">
-                <button class="btn-save-price" onclick="savePrice('sat')">
-                  <i class="fas fa-save"></i> Simpan
-                </button>
-              </div>
-            </td>
-          </tr>
+        <tbody id="serviceTableBody">
+          <!-- diisi via JS -->
         </tbody>
       </table>
+    </div>
+
+        <!-- Modal Tambah Service -->
+    <div class="modal" id="addServiceModal">
+      <div class="modal-content">
+        <h3>Tambah Layanan Baru</h3>
+        <form id="addServiceForm">
+          <label>Nama Service:</label>
+          <input type="text" name="service_name" required><br><br>
+
+          <label>Regular:</label>
+          <input type="number" name="regular" required><br>
+          <label>Exp 2 Hari:</label>
+          <input type="number" name="exp2" required><br>
+          <label>Exp 1 Hari:</label>
+          <input type="number" name="exp1" required><br>
+          <label>Exp 6 Jam:</label>
+          <input type="number" name="exp6" required><br><br>
+
+          <button type="submit" class="btn btn-primary">Simpan</button>
+          <button type="button" class="btn btn-secondary" onclick="closeAddServiceModal()">Batal</button>
+        </form>
+      </div>
     </div>
 
     <!-- FILTERS -->
