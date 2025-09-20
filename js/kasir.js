@@ -9,11 +9,6 @@ let servicesData = [];
 let currentFinishUid = null;
 let ordersData = []; // Global variable to store orders data
 let editingUid = null;
-// Service data from database
-let servicesData = [];
-let currentFinishUid = null;
-let ordersData = []; // Global variable to store orders data
-let editingUid = null;
 // Initialize User & Branch
 function initializeUser() {
     const userData = sessionStorage.getItem("currentUser");
@@ -79,7 +74,7 @@ async function saveOrderToDB(data) {
 // ===============================
 async function loadServices() {
     try {
-        const res = await fetch("backend/get_services.php");
+        const res = await fetch("backend/get_services.php"); // endpoint baru ambil services+prices
         const data = await res.json();
         
         if (data.success) {
@@ -87,27 +82,39 @@ async function loadServices() {
             console.log("Services loaded:", servicesData);
 
             const serviceSelect = document.getElementById("serviceName");
-            if (serviceSelect) {
-                serviceSelect.innerHTML = '<option value="">Pilih Layanan</option>';
+            serviceSelect.innerHTML = '<option value="">Pilih Layanan</option>';
 
-                data.services.forEach(s => {
-                    const opt = document.createElement("option");
-                    opt.value = s.id;
-                    opt.textContent = s.service_name;
-                    serviceSelect.appendChild(opt);
-                });
+            data.services.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                opt.textContent = s.service_name;
+                serviceSelect.appendChild(opt);
+            });
 
-                // Bind change event
-                serviceSelect.addEventListener("change", function() {
-                    updateCategoryOptions();
-                });
-            }
-        } else {
-            console.error("Failed to load services:", data.message);
+            // pas pilih layanan
+            serviceSelect.addEventListener("change", function() {
+                const serviceId = parseInt(this.value);
+                const service = servicesData.find(s => s.id === serviceId);
+                const categorySelect = document.getElementById("jenisLaundry");
+
+                categorySelect.innerHTML = '<option value="">Pilih Jenis Service</option>';
+                categorySelect.disabled = true;
+
+                if (service && service.prices) {
+                    Object.keys(service.prices).forEach(cat => {
+                        const opt = document.createElement("option");
+                        opt.value = cat;
+                        opt.textContent = `${cat} - Rp ${service.prices[cat].toLocaleString("id-ID")}/kg`;
+                        opt.dataset.price = service.prices[cat]; // simpan harga per kg
+                        opt.dataset.categoryId = service.prices_id ? service.prices_id[cat] : 0;
+                        categorySelect.appendChild(opt);
+                    });
+                    categorySelect.disabled = false;
+                }
+            });
         }
     } catch (err) {
         console.error("Error load services:", err);
-        alert("Gagal memuat data layanan dari server");
     }
 }
 
@@ -156,20 +163,19 @@ function updateCategoryOptions() {
         return;
     }
 
-    // FIXED: Structure sesuai dengan backend baru
     Object.entries(svc.prices).forEach(([categoryName, info]) => {
         const opt = document.createElement('option');
         opt.value = info.id; // value = category_id
         opt.textContent = `${categoryName} - ${formatRupiah(info.price)}/kg`;
         opt.dataset.categoryName = categoryName;
         opt.dataset.categoryId = info.id;
-        opt.dataset.price = String(info.price); // price sudah dalam format yang benar
+        opt.dataset.price = info.price ? String(info.price) : "0"; // <-- pastikan string angka
         categorySelect.appendChild(opt);
     });
 
     categorySelect.disabled = false;
+
     categorySelect.onchange = () => calculatePrice();
-    
     const jumlahKgEl = document.getElementById('jumlahKg');
     if (jumlahKgEl) jumlahKgEl.oninput = () => calculatePrice();
 
@@ -182,10 +188,8 @@ function updateCategoryOptions() {
 // Ambil harga berdasarkan serviceId dan categoryName
 function getServicePriceByIdCategory(serviceId, categoryName) {
     const svc = servicesData.find(s => s.id === parseInt(serviceId));
-    if (!svc || !svc.prices || !svc.prices[categoryName]) return 0;
-    
-    // FIXED: Access price dari struktur baru
-    return svc.prices[categoryName].price || 0;
+    if (!svc) return 0;
+    return svc.prices[categoryName] || 0; // langsung angka
 }
 
 // Get service name by ID
@@ -201,7 +205,7 @@ function getCategoryNameById(serviceId, categoryId) {
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     if (!service || !service.prices) return 'Unknown Category';
     
-    // FIXED: Cari category berdasarkan categoryId dalam struktur baru
+    // Cari category berdasarkan categoryId
     for (const [catName, catInfo] of Object.entries(service.prices)) {
         if (catInfo.id === parseInt(categoryId)) {
             return catName;
@@ -217,7 +221,7 @@ function getPricePerKgById(serviceId, categoryId) {
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     if (!service || !service.prices) return 0;
     
-    // FIXED: Cari price berdasarkan categoryId dalam struktur baru
+    // Cari category berdasarkan categoryId
     for (const [catName, catInfo] of Object.entries(service.prices)) {
         if (catInfo.id === parseInt(categoryId)) {
             return catInfo.price || 0;
@@ -234,8 +238,6 @@ function calculatePrice() {
     const categorySelect = document.getElementById("jenisLaundry");
     const jumlahKg = parseFloat(document.getElementById("jumlahKg").value) || 0;
     const hargaInput = document.getElementById("harga");
-
-    if (!serviceSelect || !categorySelect || !hargaInput) return;
 
     const selectedOpt = categorySelect.options[categorySelect.selectedIndex];
     const pricePerKg = selectedOpt ? parseInt(selectedOpt.dataset.price || "0") : 0;
@@ -310,16 +312,16 @@ function generateReceipt(data) {
     const receiptContent = document.getElementById('receiptContent');
     const receiptBranch = document.getElementById('receiptBranch');
     
-    if (receiptBranch) receiptBranch.textContent = CABANG;
+    receiptBranch.textContent = CABANG;
     
     // Get service and category names for display - IMPROVED LOGIC
     let serviceName = 'Unknown Service';
     let categoryName = 'Unknown Category';
     let pricePerKg = 0;
     
-    console.log('DEBUG generateReceipt data:', data);
+    console.log('DEBUG generateReceipt data:', data); // Debug log
     
-    // Priority 1: Use existing data from backend
+    // Prioritas 1: Gunakan yang sudah ada di data (dari backend)
     if (data.serviceName && data.serviceName !== 'Unknown Service') {
         serviceName = data.serviceName;
     }
@@ -330,7 +332,7 @@ function generateReceipt(data) {
         pricePerKg = data.pricePerKg;
     }
     
-    // Priority 2: If still unknown, get from servicesData using IDs
+    // Prioritas 2: Jika masih unknown, coba ambil dari servicesData
     if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category' || pricePerKg === 0) && 
         data.serviceId && data.categoryId) {
         
@@ -338,7 +340,7 @@ function generateReceipt(data) {
         if (service) {
             serviceName = service.service_name;
             
-            // Find category by categoryId in new structure
+            // Cari category berdasarkan categoryId
             Object.entries(service.prices).forEach(([catName, catInfo]) => {
                 if (catInfo.id === parseInt(data.categoryId)) {
                     categoryName = catName;
@@ -348,7 +350,7 @@ function generateReceipt(data) {
         }
     }
     
-    // Priority 3: Fallback calculation if pricePerKg still 0
+    // Prioritas 3: Fallback jika masih 0, hitung dari total harga
     if (pricePerKg === 0 && data.harga && data.jumlahKg) {
         pricePerKg = parseInt(data.harga) / parseFloat(data.jumlahKg);
     }
@@ -359,8 +361,6 @@ function generateReceipt(data) {
         pricePerKg,
         totalHarga: data.harga
     });
-    
-    if (!receiptContent) return;
     
     receiptContent.innerHTML = `
         <div class="receipt-row">
@@ -373,7 +373,7 @@ function generateReceipt(data) {
         </div>
         <div class="receipt-row">
             <span>Kasir:</span>
-            <span>${currentUser ? (currentUser.name || currentUser.username) : 'Unknown'}</span>
+            <span>${currentUser.name || currentUser.username}</span>
         </div>
         <div style="border-bottom: 1px dashed #333; margin: 10px 0;"></div>
         <div class="receipt-row">
@@ -389,12 +389,7 @@ function generateReceipt(data) {
             <span>${serviceName}</span>
         </div>
         <div class="receipt-row">
-            <span>Layanan:</span>
-            <span>${serviceName}</span>
-        </div>
-        <div class="receipt-row">
             <span>Jenis:</span>
-            <span>${categoryName}</span>
             <span>${categoryName}</span>
         </div>
         <div class="receipt-row">
@@ -403,7 +398,6 @@ function generateReceipt(data) {
         </div>
         <div class="receipt-row">
             <span>Harga/kg:</span>
-            <span>${formatRupiah(pricePerKg)}</span>
             <span>${formatRupiah(pricePerKg)}</span>
         </div>
         <div class="receipt-row">
@@ -431,6 +425,7 @@ function generateReceipt(data) {
         </div>
     `;
 }
+
 function showReceiptModal(data) {
     generateReceipt(data);
     document.getElementById('receiptModal').classList.add('show');
@@ -445,7 +440,6 @@ function printReceipt() {
 }
 
 // ===============================
-// Data Sync untuk Admin
 // Data Sync untuk Admin
 // ===============================
 function syncDataToAdmin() {
@@ -483,18 +477,12 @@ function syncDataToAdmin() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', async function() {
     await loadServices(); // Load services first
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadServices(); // Load services first
     initializeUser();
-    await loadOrders();
-
-    // set default tanggal hari ini
     await loadOrders();
 
     // set default tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalTerima').value = today;
-
 
     if (document.getElementById('finishTanggalAmbil')) {
         document.getElementById('finishTanggalAmbil').value = today;
@@ -502,9 +490,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (document.getElementById('finishTanggalBayar')) {
         document.getElementById('finishTanggalBayar').value = today;
     }
-
-    // Event listeners
-    document.getElementById('serviceName').addEventListener('change', updateCategoryOptions);
 
     // Event listeners
     document.getElementById('serviceName').addEventListener('change', updateCategoryOptions);
@@ -521,9 +506,6 @@ function switchTab(tab) {
     document.getElementById(`${tab}-tab`).classList.add('active');
 }
 
-function updateCounts(onProgressCount, finishedCount) {
-    document.getElementById('onProgressCount').textContent = onProgressCount || 0;
-    document.getElementById('finishedCount').textContent = finishedCount || 0;
 function updateCounts(onProgressCount, finishedCount) {
     document.getElementById('onProgressCount').textContent = onProgressCount || 0;
     document.getElementById('finishedCount').textContent = finishedCount || 0;
@@ -562,18 +544,12 @@ function selectPayment(method, context) {
 // TABLE RENDERING - UPDATED
 // ===============================
 function renderOnProgressTable(data) {
-// ===============================
-// TABLE RENDERING - UPDATED
-// ===============================
-function renderOnProgressTable(data) {
     const tbody = document.getElementById('onProgressTable');
-    if (!data || data.length === 0) {
     if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data on progress</td></tr>';
         return;
     }
 
-    tbody.innerHTML = data.map((item) => {
     tbody.innerHTML = data.map((item) => {
         let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
         if (item.payment && item.payment !== 'none') {
@@ -599,23 +575,17 @@ function renderOnProgressTable(data) {
                 <td>${formatDate(item.tanggalTerima)}</td>
                 <td>${formatDate(item.tanggalSelesai)}</td>
                 <td><span class="jenis-badge">${serviceName} - ${categoryName}</span></td>
-                <td><span class="jenis-badge">${serviceName} - ${categoryName}</span></td>
                 <td>${item.jumlahKg} kg</td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>${paymentDisplay}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak">
-                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak">
                             <i class="fas fa-print"></i>
                         </button>
                         <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit">
-                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-icon finish" 
-                                onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
-                                title="Selesai">
                         <button class="btn-icon finish" 
                                 onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
                                 title="Selesai">
@@ -628,12 +598,9 @@ function renderOnProgressTable(data) {
     }).join('');
 }
 
-
-function renderFinishedTable(orders) {
-
+// UPDATED: Render Finished Table dengan data yang lebih akurat
 function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
-    if (!orders || orders.length === 0) {
     if (!orders || orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
         return;
@@ -684,14 +651,6 @@ function printFinishedOrder(order) {
 // ===============================
 // FORM MANAGEMENT - UPDATED
 // ===============================
-
-function printFinishedOrder(order) {
-    showReceiptModal(order);
-}
-
-// ===============================
-// FORM MANAGEMENT - UPDATED
-// ===============================
 function showForm() {
     const modal = document.getElementById('formModal');
     modal.dataset.uid = "";  // Clear uid for add mode
@@ -699,14 +658,7 @@ function showForm() {
     document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
     document.getElementById('saveButtonText').textContent = "Simpan";
     
-    const modal = document.getElementById('formModal');
-    modal.dataset.uid = "";  // Clear uid for add mode
-    
-    document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
-    document.getElementById('saveButtonText').textContent = "Simpan";
-    
     clearForm();
-    modal.classList.add('show');
     modal.classList.add('show');
 }
 
@@ -716,14 +668,11 @@ function hideForm() {
 
 function clearForm() {
     document.getElementById('nomorNota').value = generateAutoNumber();
-    document.getElementById('nomorNota').value = generateAutoNumber();
     document.getElementById('namaPelanggan').value = '';
     document.getElementById('tanggalTerima').value = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalSelesai').value = '';
     document.getElementById('serviceName').value = '';
-    document.getElementById('serviceName').value = '';
     document.getElementById('jenisLaundry').value = '';
-    document.getElementById('jenisLaundry').disabled = true;
     document.getElementById('jenisLaundry').disabled = true;
     document.getElementById('jumlahKg').value = '';
     document.getElementById('harga').value = '';
@@ -763,33 +712,7 @@ async function saveData() {
         const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
         const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
         const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
-// ===============================
-// SAVE DATA - UPDATED
-// ===============================
-async function saveData() {
-    try {
-        const modal = document.getElementById('formModal');
-        const uidEdit = modal?.dataset?.uid || null; // kalau edit, modal dataset.uid di-set di editData()
-        const uid = uidEdit || generateUID();
 
-        const nomorNota = document.getElementById('nomorNota').value || generateAutoNumber();
-        const namaPelanggan = document.getElementById('namaPelanggan').value?.trim();
-        const tanggalTerima = document.getElementById('tanggalTerima').value;
-        const tanggalSelesai = document.getElementById('tanggalSelesai').value;
-        const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
-        const categorySelect = document.getElementById('jenisLaundry');
-        const categoryId = parseInt(categorySelect?.value || 0);
-        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || '';
-        const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
-        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
-        const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
-        const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
-
-        // Validasi
-        if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
-            alert('Lengkapi semua field yang wajib diisi!');
-            return;
-        }
         // Validasi
         if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
             alert('Lengkapi semua field yang wajib diisi!');
@@ -865,88 +788,35 @@ function editData(uid) {
         return;
     }
 
-    // Fill form fields
+    // isi form
     document.getElementById('nomorNota').value = item.nomorNota || '';
     document.getElementById('namaPelanggan').value = item.namaPelanggan || '';
     document.getElementById('tanggalTerima').value = item.tanggalTerima || '';
     document.getElementById('tanggalSelesai').value = item.tanggalSelesai || '';
-    document.getElementById('jumlahKg').value = item.jumlahKg || '';
-    document.getElementById('harga').value = item.harga || '';
-    
-    // Set service
+    // set service
     if (item.serviceId) {
         document.getElementById('serviceName').value = item.serviceId;
-        // Wait for updateCategoryOptions to populate categories
-        setTimeout(() => {
-            const catSelect = document.getElementById('jenisLaundry');
-            if (catSelect && item.categoryId) {
-                catSelect.value = item.categoryId;
-                calculatePrice(); // Recalculate after setting category
-            }
-        }, 100);
-        updateCategoryOptions();
-    }
-    
-    // Set payment radio
-    const radio = document.querySelector(`input[name="formPayment"][value="${item.payment || 'none'}"]`);
-    if (radio) {
-        radio.checked = true;
-        const paymentOption = radio.closest('.payment-option');
-        if (paymentOption) {
-            // Clear all selections first
-            document.querySelectorAll('#formModal .payment-option').forEach(opt => opt.classList.remove('selected'));
-            // Set selected
-            paymentOption.classList.add('selected');
+        updateCategoryOptions(); // akan populate jenis laundry
+        // setelah populate, set categoryId (option.value adalah category_id)
+        const catSelect = document.getElementById('jenisLaundry');
+        if (catSelect && item.categoryId) {
+            catSelect.value = item.categoryId;
         }
     }
+    document.getElementById('jumlahKg').value = item.jumlahKg || '';
+    document.getElementById('harga').value = item.harga || '';
+    // set payment radio
+    const radio = document.querySelector(`input[name="formPayment"][value="${item.payment || 'none'}"]`);
+    if (radio) radio.checked = true;
 
-    // Change modal title and button text
-    const modalTitle = document.getElementById('modalTitle');
-    const saveButtonText = document.getElementById('saveButtonText');
-    if (modalTitle) modalTitle.textContent = 'Edit Data Laundry';
-    if (saveButtonText) saveButtonText.textContent = 'Update';
+    // ubah title & button text
+    document.getElementById('modalTitle').textContent = 'Edit Data Laundry';
+    document.getElementById('saveButtonText').textContent = 'Update';
 
-    // Show modal
-    const formModal = document.getElementById('formModal');
-    if (formModal) formModal.classList.add('show');
+    // tampilkan modal
+    document.getElementById('formModal').classList.add('show');
 }
 
-// ===============================
-// UPDATE ORDER STATUS
-// ===============================
-async function updateOrderStatus(uid, tanggalAmbil, tanggalBayar, payment) {
-    try {
-        const payload = { uid, tanggalAmbil, tanggalBayar, payment };
-        console.log("DEBUG: updateOrderStatus payload:", payload);
-
-        const res = await fetch("backend/update_order_status.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error("HTTP error! status: " + res.status);
-
-        const data = await res.json();
-        console.log("DEBUG: update_order_status.php response:", data);
-        return data;
-    } catch (err) {
-        console.error("updateOrderStatus error:", err);
-        throw err;
-    }
-}
-
-// ===============================
-// FINISH MANAGEMENT
-// ===============================
-function showFinishForm(uid, payment = null) {
-    currentFinishUid = uid;
-
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("finishTanggalAmbil").value = today;
-    document.getElementById("finishTanggalBayar").value = today;
-
-    // Reset payment options
 // ===============================
 // UPDATE ORDER STATUS
 // ===============================
@@ -994,21 +864,11 @@ function showFinishForm(uid, payment = null) {
         const existingPaymentRadio = document.querySelector(
             `input[name="payment"][value="${payment}"]`
         );
-    finishRadios.forEach(radio => (radio.checked = false));
-
-    // If there's existing payment, set as default
-    if (payment && payment !== "none") {
-        const existingPaymentRadio = document.querySelector(
-            `input[name="payment"][value="${payment}"]`
-        );
         if (existingPaymentRadio) {
             existingPaymentRadio.checked = true;
             existingPaymentRadio.closest(".payment-option").classList.add("selected");
-            existingPaymentRadio.closest(".payment-option").classList.add("selected");
         }
     }
-
-    document.getElementById("finishModal").classList.add("show");
 
     document.getElementById("finishModal").classList.add("show");
 }
@@ -1025,50 +885,13 @@ async function confirmFinish() {
 
     const tanggalAmbil = document.getElementById("finishTanggalAmbil").value;
     const tanggalBayar = document.getElementById("finishTanggalBayar").value;
-async function confirmFinish() {
-    if (!currentFinishUid) {
-        alert("Tidak ada order yang dipilih untuk diselesaikan.");
-        return;
-    }
-
-    const tanggalAmbil = document.getElementById("finishTanggalAmbil").value;
-    const tanggalBayar = document.getElementById("finishTanggalBayar").value;
     const metodePembayaran = document.querySelector('input[name="payment"]:checked')?.value;
 
     if (!tanggalAmbil || !tanggalBayar || !metodePembayaran) {
         alert("Lengkapi field yang wajib diisi!");
-        alert("Lengkapi field yang wajib diisi!");
         return;
     }
 
-    try {
-        const result = await updateOrderStatus(
-            currentFinishUid,
-            tanggalAmbil,
-            tanggalBayar,
-            metodePembayaran
-        );
-
-        console.log("Hasil update order:", result);
-
-        if (result.success) {
-            alert("Laundry berhasil diselesaikan & tersimpan di database!");
-            hideFinishForm();
-            await loadOrders(); // Refresh data from DB
-        } else {
-            alert("Gagal update ke database. Status tetap progress.");
-        }
-    } catch (err) {
-        console.error("Error confirmFinish:", err);
-        alert("Terjadi kesalahan saat update order.");
-    } finally {
-        currentFinishUid = null;
-    }
-}
-
-// ===============================
-// SEARCH FUNCTIONS
-// ===============================
     try {
         const result = await updateOrderStatus(
             currentFinishUid,
@@ -1106,42 +929,26 @@ function performSearch(type) {
     
     if (type === 'onprogress') {
         const allOnProgress = ordersData.filter(o => o.status === "progress");
-        const allOnProgress = ordersData.filter(o => o.status === "progress");
         if (searchTerm === '') {
             renderOnProgressTable(allOnProgress);
-            renderOnProgressTable(allOnProgress);
         } else {
-            const filteredData = allOnProgress.filter(item => 
             const filteredData = allOnProgress.filter(item => 
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
                 getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
-                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
-                item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
             );
-            renderOnProgressTable(filteredData);
             renderOnProgressTable(filteredData);
         }
     } else {
         const allFinished = ordersData.filter(o => o.status === "finished");
-        const allFinished = ordersData.filter(o => o.status === "finished");
         if (searchTerm === '') {
-            renderFinishedTable(allFinished);
             renderFinishedTable(allFinished);
         } else {
             const filteredData = allFinished.filter(item =>
-            const filteredData = allFinished.filter(item =>
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
-                item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
-            );
-            renderFinishedTable(filteredData);
-        }
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
                 getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
@@ -1153,11 +960,9 @@ function performSearch(type) {
 
 // ===============================
 // AUTO SYNC & STORAGE LISTENERS
-// AUTO SYNC & STORAGE LISTENERS
 // ===============================
 setInterval(function() {
     syncDataToAdmin();
-}, 10000); // Sync every 10 seconds
 }, 10000); // Sync every 10 seconds
 
 window.addEventListener('storage', function(e) {
