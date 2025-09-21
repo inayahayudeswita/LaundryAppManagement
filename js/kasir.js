@@ -9,11 +9,6 @@ let servicesData = [];
 let currentFinishUid = null;
 let ordersData = []; // Global variable to store orders data
 let editingUid = null;
-// Service data from database
-let servicesData = [];
-let currentFinishUid = null;
-let ordersData = []; // Global variable to store orders data
-let editingUid = null;
 // Initialize User & Branch
 function initializeUser() {
     const userData = sessionStorage.getItem("currentUser");
@@ -483,8 +478,6 @@ function syncDataToAdmin() {
 // Initialize App
 document.addEventListener('DOMContentLoaded', async function() {
     await loadServices(); // Load services first
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadServices(); // Load services first
     initializeUser();
     await loadOrders();
 
@@ -562,18 +555,12 @@ function selectPayment(method, context) {
 // TABLE RENDERING - UPDATED
 // ===============================
 function renderOnProgressTable(data) {
-// ===============================
-// TABLE RENDERING - UPDATED
-// ===============================
-function renderOnProgressTable(data) {
     const tbody = document.getElementById('onProgressTable');
-    if (!data || data.length === 0) {
     if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data on progress</td></tr>';
         return;
     }
 
-    tbody.innerHTML = data.map((item) => {
     tbody.innerHTML = data.map((item) => {
         let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
         if (item.payment && item.payment !== 'none') {
@@ -626,14 +613,12 @@ function renderOnProgressTable(data) {
             </tr>
         `;
     }).join('');
+    }
 }
 
 
 function renderFinishedTable(orders) {
-
-function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
-    if (!orders || orders.length === 0) {
     if (!orders || orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
         return;
@@ -673,12 +658,7 @@ function renderFinishedTable(orders) {
                 </td>
             </tr>
         `;
-    }).join('');
-}
-
-
-function printFinishedOrder(order) {
-    showReceiptModal(order);
+        }).join('');
 }
 
 // ===============================
@@ -692,13 +672,7 @@ function printFinishedOrder(order) {
 // ===============================
 // FORM MANAGEMENT - UPDATED
 // ===============================
-function showForm() {
-    const modal = document.getElementById('formModal');
-    modal.dataset.uid = "";  // Clear uid for add mode
-    
-    document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
-    document.getElementById('saveButtonText').textContent = "Simpan";
-    
+function showForm() {    
     const modal = document.getElementById('formModal');
     modal.dataset.uid = "";  // Clear uid for add mode
     
@@ -742,27 +716,7 @@ function clearForm() {
     }
 }
 
-// ===============================
-// SAVE DATA - UPDATED
-// ===============================
-async function saveData() {
-    try {
-        const modal = document.getElementById('formModal');
-        const uidEdit = modal?.dataset?.uid || null; // kalau edit, modal dataset.uid di-set di editData()
-        const uid = uidEdit || generateUID();
 
-        const nomorNota = document.getElementById('nomorNota').value || generateAutoNumber();
-        const namaPelanggan = document.getElementById('namaPelanggan').value?.trim();
-        const tanggalTerima = document.getElementById('tanggalTerima').value;
-        const tanggalSelesai = document.getElementById('tanggalSelesai').value;
-        const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
-        const categorySelect = document.getElementById('jenisLaundry');
-        const categoryId = parseInt(categorySelect?.value || 0);
-        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || '';
-        const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
-        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
-        const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
-        const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
 // ===============================
 // SAVE DATA - UPDATED
 // ===============================
@@ -1106,18 +1060,13 @@ function performSearch(type) {
     
     if (type === 'onprogress') {
         const allOnProgress = ordersData.filter(o => o.status === "progress");
-        const allOnProgress = ordersData.filter(o => o.status === "progress");
         if (searchTerm === '') {
             renderOnProgressTable(allOnProgress);
             renderOnProgressTable(allOnProgress);
         } else {
             const filteredData = allOnProgress.filter(item => 
-            const filteredData = allOnProgress.filter(item => 
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
-                item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
                 getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
@@ -1127,12 +1076,10 @@ function performSearch(type) {
         }
     } else {
         const allFinished = ordersData.filter(o => o.status === "finished");
-        const allFinished = ordersData.filter(o => o.status === "finished");
         if (searchTerm === '') {
             renderFinishedTable(allFinished);
             renderFinishedTable(allFinished);
         } else {
-            const filteredData = allFinished.filter(item =>
             const filteredData = allFinished.filter(item =>
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
@@ -1144,10 +1091,10 @@ function performSearch(type) {
         }
                 item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
-            );
+                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm);
             renderFinishedTable(filteredData);
         }
+    }
     }
 }
 
@@ -1157,7 +1104,6 @@ function performSearch(type) {
 // ===============================
 setInterval(function() {
     syncDataToAdmin();
-}, 10000); // Sync every 10 seconds
 }, 10000); // Sync every 10 seconds
 
 window.addEventListener('storage', function(e) {
