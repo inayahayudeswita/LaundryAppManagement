@@ -9,6 +9,58 @@ let itemsPerPage = 50;
 // Service pricing data
 let servicesData = [];
 let tableVisible = false;
+let branchesData = [];
+
+// ===============================
+// LOAD BRANCHES FROM DATABASE
+// ===============================
+async function loadBranches() {
+    try {
+        const response = await fetch('backend/get_branches.php');
+        const result = await response.json();
+        
+        if (!result.success) {
+            console.error('Failed to load branches:', result.message);
+            return;
+        }
+        
+        branchesData = result.branches || [];
+        console.log('Branches loaded:', branchesData);
+        
+        // Update filter dropdown
+        populateBranchFilter();
+        
+    } catch (error) {
+        console.error('Error loading branches:', error);
+    }
+}
+
+// ===============================
+// POPULATE BRANCH FILTER DROPDOWN
+// ===============================
+function populateBranchFilter() {
+    const filterCabang = document.getElementById('filterCabang');
+    if (!filterCabang) return;
+    
+    // Simpan nilai yang dipilih sebelumnya
+    const currentValue = filterCabang.value;
+    
+    // Clear existing options
+    filterCabang.innerHTML = '<option value="">Semua Cabang</option>';
+    
+    // Add branch options
+    branchesData.forEach(branch => {
+        const option = document.createElement('option');
+        option.value = branch;
+        option.textContent = branch;
+        filterCabang.appendChild(option);
+    });
+    
+    // Restore previous selection if still valid
+    if (currentValue && branchesData.includes(currentValue)) {
+        filterCabang.value = currentValue;
+    }
+}
 
 // ===============================
 // Utility Functions
@@ -28,6 +80,7 @@ function formatDate(dateStr) {
 // ===============================
 document.addEventListener('DOMContentLoaded', async function() {
     checkAuth();
+    await loadBranches();   
     await loadServicePricing(); 
     await loadData();         
     updateStats();
@@ -98,36 +151,31 @@ function renderServiceTable() {
 
     servicesData.forEach(service => {
         const tr = document.createElement('tr');
+
+        let priceCols = '';
+        // Loop category dalam urutan tetap (Regular → Exp 2 Hari → Exp 1 Hari → Exp 6 Jam)
+        const categories = ["Regular", "Exp 2 Hari", "Exp 1 Hari", "Exp 6 Jam"];
+        categories.forEach(cat => {
+            const priceInfo = service.prices[cat]; // {id, price} object
+            
+            // PERBAIKAN: Akses harga dari object, bukan langsung
+            const priceVal = priceInfo && typeof priceInfo === 'object' ? priceInfo.price : (priceInfo || 0);
+            const categoryId = priceInfo && typeof priceInfo === 'object' ? priceInfo.id : 0;
+
+            priceCols += `
+                <td>
+                    <input type="number" 
+                           class="price-input" 
+                           value="${priceVal}" 
+                           onchange="updateServicePrice(${service.id}, ${categoryId}, this.value)"
+                           placeholder="0">
+                </td>
+            `;
+        });
+
         tr.innerHTML = `
             <td><strong>${service.service_name}</strong></td>
-            <td>
-                <input type="number" 
-                       class="price-input" 
-                       value="${service.prices['Regular'] || 0}" 
-                       onchange="updateServicePrice(${service.id}, 'Regular', this.value)"
-                       placeholder="0">
-            </td>
-            <td>
-                <input type="number" 
-                       class="price-input" 
-                       value="${service.prices['Exp 2 Hari'] || 0}" 
-                       onchange="updateServicePrice(${service.id}, 'Exp 2 Hari', this.value)"
-                       placeholder="0">
-            </td>
-            <td>
-                <input type="number" 
-                       class="price-input" 
-                       value="${service.prices['Exp 1 Hari'] || 0}" 
-                       onchange="updateServicePrice(${service.id}, 'Exp 1 Hari', this.value)"
-                       placeholder="0">
-            </td>
-            <td>
-                <input type="number" 
-                       class="price-input" 
-                       value="${service.prices['Exp 6 Jam'] || 0}" 
-                       onchange="updateServicePrice(${service.id}, 'Exp 6 Jam', this.value)"
-                       placeholder="0">
-            </td>
+            ${priceCols}
             <td>
                 <button class="btn btn-danger btn-sm" onclick="deleteService(${service.id})" title="Hapus Layanan">
                     <i class="fas fa-trash"></i>
@@ -138,40 +186,27 @@ function renderServiceTable() {
     });
 }
 
+
+
+
+
+
+
+
 // Update service price
-async function updateServicePrice(serviceId, categoryName, newPrice) {
-    const price = parseInt(newPrice) || 0;
-    
+async function updateServicePrice(serviceId, categoryId, newPrice) {
     try {
-        const response = await fetch('backend/update_service_price.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                service_id: serviceId, 
-                category_name: categoryName, 
-                price: price 
-            })
+        const res = await fetch("backend/update_service_price.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serviceId, categoryId, price: parseInt(newPrice) || 0 })
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Update local data
-            const serviceIndex = servicesData.findIndex(s => s.id === serviceId);
-            if (serviceIndex !== -1) {
-                servicesData[serviceIndex].prices[categoryName] = price;
-                updatePricingStats();
-            }
-            console.log('Price updated successfully');
-        } else {
-            alert('Gagal mengupdate harga: ' + result.message);
-            // Reload to get correct values
-            loadServicePricing();
+        const data = await res.json();
+        if (!data.success) {
+            alert("Gagal update harga: " + data.message);
         }
-    } catch (error) {
-        console.error('Error updating price:', error);
-        alert('Terjadi kesalahan saat mengupdate harga');
-        loadServicePricing();
+    } catch (err) {
+        console.error("Error update harga:", err);
     }
 }
 
@@ -189,7 +224,11 @@ function updatePricingStats() {
         let countRegular = 0;
         
         servicesData.forEach(service => {
-            const regularPrice = service.prices['Regular'];
+            const regularPriceInfo = service.prices['Regular'];
+            // PERBAIKAN: Handle object format
+            const regularPrice = regularPriceInfo && typeof regularPriceInfo === 'object' ? 
+                                regularPriceInfo.price : (regularPriceInfo || 0);
+            
             if (regularPrice && regularPrice > 0) {
                 totalRegular += regularPrice;
                 countRegular++;
@@ -303,12 +342,13 @@ async function deleteService(serviceId) {
 }
 
 // Public functions for getting service prices (used by kasir)
-function getServicePrices() {
-    const prices = {};
-    servicesData.forEach(service => {
-        prices[service.service_name] = service.prices['Regular'] || 0;
-    });
-    return prices;
+function getServicePrice(serviceName) {
+    const service = servicesData.find(s => s.service_name === serviceName);
+    if (!service) return 0;
+    
+    const regularPriceInfo = service.prices['Regular'];
+    return regularPriceInfo && typeof regularPriceInfo === 'object' ? 
+           regularPriceInfo.price : (regularPriceInfo || 0);
 }
 
 function getServicePrice(serviceName) {
@@ -319,8 +359,27 @@ function getServicePrice(serviceName) {
 // Get price by service name and category
 function getServicePriceByCategory(serviceName, category) {
     const service = servicesData.find(s => s.service_name === serviceName);
-    return service ? (service.prices[category] || 0) : 0;
+    if (!service) return 0;
+    
+    const priceInfo = service.prices[category];
+    return priceInfo && typeof priceInfo === 'object' ? 
+           priceInfo.price : (priceInfo || 0);
 }
+
+function getServicePriceByIdCategory(serviceId, categoryId) {
+    const svc = servicesData.find(s => s.id === parseInt(serviceId));
+    if (!svc) return 0;
+    
+    for (const [catName, priceInfo] of Object.entries(svc.prices)) {
+        if (priceInfo && typeof priceInfo === 'object') {
+            if (priceInfo.id == categoryId || catName == categoryId) {
+                return priceInfo.price;
+            }
+        }
+    }
+    return 0;
+}
+
 
 // ===============================
 // Data Management - FETCH FROM DATABASE
@@ -668,13 +727,29 @@ function exportExcel() {
 // ===============================
 setInterval(async function() {
     const prevDataLength = allData.length;
-    await loadData();
+    const prevBranchesLength = branchesData.length;
+    
+    await Promise.allSettled([loadData(), loadBranches()]);
+    
+    let hasUpdates = false;
+    
     if (allData.length !== prevDataLength) {
         updateStats();
         applyFilters();
-        console.log('Data refreshed automatically. New count:', allData.length);
+        hasUpdates = true;
+        console.log('Orders refreshed:', allData.length);
     }
-}, 30000); // Refresh every 30 seconds
+    
+    if (branchesData.length !== prevBranchesLength) {
+        applyFilters();
+        hasUpdates = true;
+        console.log('Branches refreshed:', branchesData.length);
+    }
+    
+    if (hasUpdates) {
+        console.log('Auto-refresh at:', new Date().toLocaleTimeString());
+    }
+}, 30000);// Refresh every 30 seconds
 
 // ===============================
 // Global Functions

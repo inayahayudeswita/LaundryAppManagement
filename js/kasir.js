@@ -142,6 +142,7 @@ function populateServiceOptions() {
     serviceSelect.onchange = () => updateCategoryOptions();
 }
 
+
 // Update category options based on selected service
 function updateCategoryOptions() {
     const serviceSelect = document.getElementById('serviceName');
@@ -162,67 +163,103 @@ function updateCategoryOptions() {
         return;
     }
 
-    // svc.prices: { 'Regular': {id, price}, ... }
     Object.entries(svc.prices).forEach(([categoryName, info]) => {
-        // info = { id, price }
         const opt = document.createElement('option');
-        opt.value = info.id; // **value = category_id** (penting)
+        opt.value = info.id; // value = category_id
         opt.textContent = `${categoryName} - ${formatRupiah(info.price)}/kg`;
-        // simpan metadata untuk akses cepat
         opt.dataset.categoryName = categoryName;
-        opt.dataset.price = info.price;
         opt.dataset.categoryId = info.id;
+        opt.dataset.price = info.price ? String(info.price) : "0"; // <-- pastikan string angka
         categorySelect.appendChild(opt);
     });
 
     categorySelect.disabled = false;
 
-    // attach calculate listeners
     categorySelect.onchange = () => calculatePrice();
     const jumlahKgEl = document.getElementById('jumlahKg');
     if (jumlahKgEl) jumlahKgEl.oninput = () => calculatePrice();
 
-    // recalc jika diperlukan
     calculatePrice();
 }
 
 
+
+
 // Ambil harga berdasarkan serviceId dan categoryName
-function getServicePriceByIdCategory(serviceId, categoryId) {
+function getServicePriceByIdCategory(serviceId, categoryName) {
     const svc = servicesData.find(s => s.id === parseInt(serviceId));
     if (!svc) return 0;
-    for (const [catName, info] of Object.entries(svc.prices)) {
-        if (info && (info.id == categoryId || catName == categoryId)) return info.price;
-    }
-    return 0;
+    return svc.prices[categoryName] || 0; // langsung angka
 }
 
 // Get service name by ID
 function getServiceNameById(serviceId) {
+    if (!serviceId) return 'Unknown Service';
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     return service ? service.service_name : 'Unknown Service';
 }
 
+function getCategoryNameById(serviceId, categoryId) {
+    if (!serviceId || !categoryId) return 'Unknown Category';
+    
+    const service = servicesData.find(s => s.id === parseInt(serviceId));
+    if (!service || !service.prices) return 'Unknown Category';
+    
+    // Cari category berdasarkan categoryId
+    for (const [catName, catInfo] of Object.entries(service.prices)) {
+        if (catInfo.id === parseInt(categoryId)) {
+            return catName;
+        }
+    }
+    
+    return 'Unknown Category';
+}
+
+function getPricePerKgById(serviceId, categoryId) {
+    if (!serviceId || !categoryId) return 0;
+    
+    const service = servicesData.find(s => s.id === parseInt(serviceId));
+    if (!service || !service.prices) return 0;
+    
+    // Cari category berdasarkan categoryId
+    for (const [catName, catInfo] of Object.entries(service.prices)) {
+        if (catInfo.id === parseInt(categoryId)) {
+            return catInfo.price || 0;
+        }
+    }
+    
+    return 0;
+}
+
+
 // Hitung total harga
 function calculatePrice() {
-    const serviceSelect = document.getElementById('serviceName');
-    const categorySelect = document.getElementById('jenisLaundry');
-    const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
-    const hargaInput = document.getElementById('harga');
+    const serviceSelect = document.getElementById("serviceName");
+    const categorySelect = document.getElementById("jenisLaundry");
+    const jumlahKg = parseFloat(document.getElementById("jumlahKg").value) || 0;
+    const hargaInput = document.getElementById("harga");
 
-    const sid = serviceSelect ? parseInt(serviceSelect.value) : 0;
-    const cid = categorySelect ? categorySelect.value : '';
+    const selectedOpt = categorySelect.options[categorySelect.selectedIndex];
+    const pricePerKg = selectedOpt ? parseInt(selectedOpt.dataset.price || "0") : 0;
 
-    if (sid && cid && jumlahKg > 0) {
-        const pricePerKg = getServicePriceByIdCategory(sid, cid);
+    console.log("DEBUG calculatePrice:", {
+        serviceId: serviceSelect.value,
+        categoryId: categorySelect.value,
+        pricePerKg,
+        jumlahKg
+    });
+
+    if (serviceSelect.value && categorySelect.value && jumlahKg > 0 && pricePerKg > 0) {
         const totalHarga = pricePerKg * jumlahKg;
         hargaInput.value = totalHarga;
-        hargaInput.dataset.pricePerKg = pricePerKg; 
+        hargaInput.dataset.pricePerKg = pricePerKg;
     } else {
-        hargaInput.value = '';
+        hargaInput.value = "";
         hargaInput.dataset.pricePerKg = 0;
     }
 }
+
+
 
 
 // ===============================
@@ -277,16 +314,53 @@ function generateReceipt(data) {
     
     receiptBranch.textContent = CABANG;
     
-    // Get service and category names for display
+    // Get service and category names for display - IMPROVED LOGIC
     let serviceName = 'Unknown Service';
     let categoryName = 'Unknown Category';
     let pricePerKg = 0;
     
-    if (data.serviceName && data.jenisLaundry) {
-        serviceName = getServiceNameById(data.serviceName);
-        categoryName = data.jenisLaundry;
-        pricePerKg = getServicePriceByIdCategory(data.serviceName, data.jenisLaundry);
+    console.log('DEBUG generateReceipt data:', data); // Debug log
+    
+    // Prioritas 1: Gunakan yang sudah ada di data (dari backend)
+    if (data.serviceName && data.serviceName !== 'Unknown Service') {
+        serviceName = data.serviceName;
     }
+    if (data.categoryName && data.categoryName !== 'Unknown Category') {
+        categoryName = data.categoryName;
+    }
+    if (data.pricePerKg && data.pricePerKg > 0) {
+        pricePerKg = data.pricePerKg;
+    }
+    
+    // Prioritas 2: Jika masih unknown, coba ambil dari servicesData
+    if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category' || pricePerKg === 0) && 
+        data.serviceId && data.categoryId) {
+        
+        const service = servicesData.find(s => s.id === parseInt(data.serviceId));
+        if (service) {
+            serviceName = service.service_name;
+            
+            // Cari category berdasarkan categoryId
+            Object.entries(service.prices).forEach(([catName, catInfo]) => {
+                if (catInfo.id === parseInt(data.categoryId)) {
+                    categoryName = catName;
+                    pricePerKg = catInfo.price || 0;
+                }
+            });
+        }
+    }
+    
+    // Prioritas 3: Fallback jika masih 0, hitung dari total harga
+    if (pricePerKg === 0 && data.harga && data.jumlahKg) {
+        pricePerKg = parseInt(data.harga) / parseFloat(data.jumlahKg);
+    }
+    
+    console.log('Receipt display values:', {
+        serviceName,
+        categoryName,
+        pricePerKg,
+        totalHarga: data.harga
+    });
     
     receiptContent.innerHTML = `
         <div class="receipt-row">
@@ -482,9 +556,16 @@ function renderOnProgressTable(data) {
             paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
         }
 
-        // gunakan langsung serviceName & categoryName dari backend
-        const serviceName = item.serviceName || 'Unknown Service';
-        const categoryName = item.categoryName || 'Unknown Category';
+        // Gunakan data yang sudah ada di backend, atau fallback ke servicesData
+        let serviceName = item.serviceName || 'Unknown Service';
+        let categoryName = item.categoryName || 'Unknown Category';
+        
+        // Jika masih unknown, coba ambil dari servicesData
+        if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category') && 
+            item.serviceId && item.categoryId) {
+            serviceName = getServiceNameById(item.serviceId);
+            categoryName = getCategoryNameById(item.serviceId, item.categoryId);
+        }
 
         return `
             <tr>
@@ -517,7 +598,7 @@ function renderOnProgressTable(data) {
     }).join('');
 }
 
-
+// UPDATED: Render Finished Table dengan data yang lebih akurat
 function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
     if (!orders || orders.length === 0) {
@@ -526,9 +607,16 @@ function renderFinishedTable(orders) {
     }
 
     tbody.innerHTML = orders.map((item) => {
-        // langsung ambil dari backend
-        const serviceName = item.serviceName || 'Unknown Service';
-        const categoryName = item.categoryName || 'Unknown Category';
+        // Gunakan data yang sudah ada di backend, atau fallback ke servicesData
+        let serviceName = item.serviceName || 'Unknown Service';
+        let categoryName = item.categoryName || 'Unknown Category';
+        
+        // Jika masih unknown, coba ambil dari servicesData
+        if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category') && 
+            item.serviceId && item.categoryId) {
+            serviceName = getServiceNameById(item.serviceId);
+            categoryName = getCategoryNameById(item.serviceId, item.categoryId);
+        }
 
         return `
             <tr>

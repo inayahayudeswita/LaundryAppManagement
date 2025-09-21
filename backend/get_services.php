@@ -3,7 +3,6 @@ include "config.php";
 header("Content-Type: application/json");
 
 try {
-    // Ambil service + category + price + category id
     $sql = "
         SELECT s.id AS service_id, s.service_name,
                c.id AS category_id, c.category_name,
@@ -23,7 +22,7 @@ try {
             $data[$sid] = [
                 'id' => $sid,
                 'service_name' => $row['service_name'],
-                'prices' => [] // akan berisi: "Regular" => { id: 1, price: 7000 }
+                'prices' => []
             ];
         }
         $catName = $row['category_name'];
@@ -39,3 +38,4 @@ try {
 } finally {
     if (isset($conn)) $conn->close();
 }
+?>
