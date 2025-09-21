@@ -596,7 +596,6 @@ function renderOnProgressTable(data) {
             </tr>
         `;
     }).join('');
-    }
 }
 
 // UPDATED: Render Finished Table dengan data yang lebih akurat
@@ -641,7 +640,7 @@ function renderFinishedTable(orders) {
                 </td>
             </tr>
         `;
-        }).join('');
+    }).join('');
 }
 
 
