@@ -75,6 +75,20 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('id-ID');
 }
 
+// Format Rupiah input function for forms
+function formatRupiahInput(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    if (value) {
+        value = parseInt(value).toLocaleString('id-ID');
+    }
+    input.value = value;
+}
+
+// Convert formatted rupiah back to number
+function parseRupiahValue(formattedValue) {
+    return parseInt(formattedValue.replace(/[^\d]/g, '')) || 0;
+}
+
 // ===============================
 // Initialize App
 // ===============================
@@ -137,7 +151,7 @@ async function loadServicePricing() {
     }
 }
 
-// Render service pricing table
+// Render service pricing table with Tailwind styling
 function renderServiceTable() {
     const tbody = document.getElementById('serviceTableBody');
     if (!tbody) return;
@@ -145,39 +159,46 @@ function renderServiceTable() {
     tbody.innerHTML = '';
 
     if (servicesData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">Belum ada layanan yang terdaftar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">Belum ada layanan yang terdaftar</td></tr>';
         return;
     }
 
     servicesData.forEach(service => {
         const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition-colors';
 
         let priceCols = '';
-        // Loop category dalam urutan tetap (Regular → Exp 2 Hari → Exp 1 Hari → Exp 6 Jam)
         const categories = ["Regular", "Exp 2 Hari", "Exp 1 Hari", "Exp 6 Jam"];
         categories.forEach(cat => {
-            const priceInfo = service.prices[cat]; // {id, price} object
-            
-            // PERBAIKAN: Akses harga dari object, bukan langsung
+            const priceInfo = service.prices[cat];
             const priceVal = priceInfo && typeof priceInfo === 'object' ? priceInfo.price : (priceInfo || 0);
             const categoryId = priceInfo && typeof priceInfo === 'object' ? priceInfo.id : 0;
 
             priceCols += `
-                <td>
-                    <input type="number" 
-                           class="price-input" 
-                           value="${priceVal}" 
-                           onchange="updateServicePrice(${service.id}, ${categoryId}, this.value)"
-                           placeholder="0">
+                <td class="py-3 px-4 border-b border-gray-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-500 text-sm">Rp</span>
+                        <input type="text" 
+                               class="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-right" 
+                               value="${priceVal.toLocaleString('id-ID')}" 
+                               onchange="updateServicePriceFormatted(${service.id}, ${categoryId}, this)"
+                               oninput="formatRupiahInput(this)"
+                               placeholder="0">
+                    </div>
                 </td>
             `;
         });
 
         tr.innerHTML = `
-            <td><strong>${service.service_name}</strong></td>
+            <td class="py-3 px-4 border-b border-gray-100">
+                <span class="font-medium text-gray-900">${service.service_name}</span>
+            </td>
             ${priceCols}
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteService(${service.id})" title="Hapus Layanan">
+            <td class="py-3 px-4 border-b border-gray-100">
+                <button 
+                    class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors duration-200" 
+                    onclick="deleteService(${service.id})" 
+                    title="Hapus Layanan">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -186,14 +207,32 @@ function renderServiceTable() {
     });
 }
 
+// Update service price with formatted input
+async function updateServicePriceFormatted(serviceId, categoryId, inputElement) {
+    try {
+        const newPrice = parseRupiahValue(inputElement.value);
+        const res = await fetch("backend/update_service_price.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serviceId, categoryId, price: newPrice })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            alert("Gagal update harga: " + data.message);
+            // Reset input value on error
+            inputElement.value = "0";
+        } else {
+            // Refresh pricing stats after successful update
+            await loadServicePricing();
+        }
+    } catch (err) {
+        console.error("Error update harga:", err);
+        alert("Terjadi kesalahan saat update harga");
+        inputElement.value = "0";
+    }
+}
 
-
-
-
-
-
-
-// Update service price
+// Update service price (legacy function for compatibility)
 async function updateServicePrice(serviceId, categoryId, newPrice) {
     try {
         const res = await fetch("backend/update_service_price.php", {
@@ -225,7 +264,6 @@ function updatePricingStats() {
         
         servicesData.forEach(service => {
             const regularPriceInfo = service.prices['Regular'];
-            // PERBAIKAN: Handle object format
             const regularPrice = regularPriceInfo && typeof regularPriceInfo === 'object' ? 
                                 regularPriceInfo.price : (regularPriceInfo || 0);
             
@@ -236,7 +274,11 @@ function updatePricingStats() {
         });
         
         const avgPrice = countRegular > 0 ? Math.round(totalRegular / countRegular) : 0;
-        avgPriceEl.textContent = formatRupiah(avgPrice);
+        if (avgPrice >= 1000) {
+            avgPriceEl.textContent = 'Rp ' + Math.round(avgPrice / 1000) + 'K';
+        } else {
+            avgPriceEl.textContent = formatRupiah(avgPrice);
+        }
     }
 }
 
@@ -250,11 +292,11 @@ function togglePricingTable() {
     tableVisible = !tableVisible;
     
     if (tableVisible) {
-        container.style.display = 'block';
-        toggleIcon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        container.classList.remove('hidden');
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-up text-white"></i>';
     } else {
-        container.style.display = 'none';
-        toggleIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        container.classList.add('hidden');
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-down text-white"></i>';
     }
 }
 
@@ -262,57 +304,17 @@ function togglePricingTable() {
 function openAddServiceModal() {
     const modal = document.getElementById('addServiceModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.classList.remove('hidden');
     }
 }
 
 function closeAddServiceModal() {
     const modal = document.getElementById('addServiceModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.add('hidden');
         document.getElementById('addServiceForm').reset();
     }
 }
-
-// Handle add service form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const addServiceForm = document.getElementById('addServiceForm');
-    if (addServiceForm) {
-        addServiceForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const serviceData = {
-                service_name: formData.get('service_name'),
-                regular: parseInt(formData.get('regular')) || 0,
-                exp2: parseInt(formData.get('exp2')) || 0,
-                exp1: parseInt(formData.get('exp1')) || 0,
-                exp6: parseInt(formData.get('exp6')) || 0
-            };
-            
-            try {
-                const response = await fetch('backend/save_service.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(serviceData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Layanan berhasil ditambahkan!');
-                    closeAddServiceModal();
-                    loadServicePricing(); // Reload data
-                } else {
-                    alert('Gagal menambahkan layanan: ' + result.message);
-                }
-            } catch (error) {
-                console.error('Error adding service:', error);
-                alert('Terjadi kesalahan saat menambahkan layanan');
-            }
-        });
-    }
-});
 
 // Delete service function
 async function deleteService(serviceId) {
@@ -351,11 +353,6 @@ function getServicePrice(serviceName) {
            regularPriceInfo.price : (regularPriceInfo || 0);
 }
 
-function getServicePrice(serviceName) {
-    const service = servicesData.find(s => s.service_name === serviceName);
-    return service ? (service.prices['Regular'] || 0) : 0;
-}
-
 // Get price by service name and category
 function getServicePriceByCategory(serviceName, category) {
     const service = servicesData.find(s => s.service_name === serviceName);
@@ -379,7 +376,6 @@ function getServicePriceByIdCategory(serviceId, categoryId) {
     }
     return 0;
 }
-
 
 // ===============================
 // Data Management - FETCH FROM DATABASE
@@ -429,7 +425,6 @@ async function loadData() {
         
         console.log('Data loaded from database:', allData.length, 'items');
         
-        // Log sample data untuk debugging
         if (allData.length > 0) {
             console.log('Sample data:', allData[0]);
         }
@@ -561,7 +556,7 @@ function performSearch() {
 }
 
 // ===============================
-// Table Rendering
+// Table Rendering with Separated Service Name and Category
 // ===============================
 function renderTable() {
     const tbody = document.getElementById('dataTable');
@@ -572,38 +567,83 @@ function renderTable() {
     const pageData = filteredData.slice(startIndex, endIndex);
     
     if (pageData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Tidak ada data untuk ditampilkan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="text-center py-16 text-gray-500 italic">Tidak ada data untuk ditampilkan</td></tr>';
         const dataCount = document.getElementById('dataCount');
         if (dataCount) dataCount.textContent = 'Total: 0 data';
         return;
     }
     
-    tbody.innerHTML = pageData.map(function(item) {
+    tbody.innerHTML = pageData.map(function(item, index) {
         let paymentDisplay = 'BELUM BAYAR';
+        let paymentClass = 'bg-yellow-100 text-yellow-800';
+        
         if (item.status === 'On Progress') {
             if (item.payment && item.payment !== 'none') {
                 paymentDisplay = item.payment.toUpperCase();
+                paymentClass = 'bg-blue-100 text-blue-800';
             }
         } else if (item.status === 'Finished') {
             if (item.metodePembayaran && item.metodePembayaran !== 'belum bayar' && item.metodePembayaran !== '-') {
                 paymentDisplay = item.metodePembayaran.toUpperCase();
+                paymentClass = 'bg-green-100 text-green-800';
             }
         }
         
-        return '<tr>' +
-            '<td><span class="nota-code">' + (item.nomorNota || '-') + '</span></td>' +
-            '<td>' + (item.namaPelanggan || '-') + '</td>' +
-            '<td><span class="cabang-badge">' + (item.cabang || '-') + '</span></td>' +
-            '<td><span class="status-badge ' + (item.status === 'Finished' ? 'finished' : 'progress') + '">' + item.status + '</span></td>' +
-            '<td>' + formatDate(item.tanggalTerima) + '</td>' +
-            '<td>' + formatDate(item.tanggalSelesai) + '</td>' +
-            '<td><span class="jenis-badge">' + (item.jenisLaundry || '-') + '</span></td>' +
-            '<td>' + (item.jumlahKg || 0) + ' kg</td>' +
-            '<td>' + (item.tanggalAmbil !== '-' ? formatDate(item.tanggalAmbil) : '-') + '</td>' +
-            '<td>' + (item.tanggalBayar !== '-' ? formatDate(item.tanggalBayar) : '-') + '</td>' +
-            '<td>' + paymentDisplay + '</td>' +
-            '<td><span class="currency">' + formatRupiah(item.harga || 0) + '</span></td>' +
-        '</tr>';
+        const statusClass = item.status === 'Finished' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+        
+        // Parse service name and category from jenisLaundry field
+        let serviceName = 'Unknown Service';
+        let serviceCategory = 'Unknown Category';
+        
+        if (item.jenisLaundry && item.jenisLaundry.includes(' - ')) {
+            const parts = item.jenisLaundry.split(' - ');
+            serviceName = parts[0] || 'Unknown Service';
+            serviceCategory = parts[1] || 'Unknown Category';
+        } else {
+            serviceName = item.jenisLaundry || 'Unknown Service';
+        }
+        
+        return `<tr class="hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
+            <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 140px;">
+                <span class="font-mono text-blue-600 whitespace-nowrap">${item.nomorNota || '-'}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 120px;">
+                <span class="block" title="${item.namaPelanggan || '-'}">${item.namaPelanggan || '-'}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 100px;">
+                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs inline-block">${item.cabang || '-'}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 text-center" style="min-width: 90px;">
+                <span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium inline-block">${item.status}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 whitespace-nowrap" style="min-width: 100px;">
+                ${formatDate(item.tanggalTerima)}
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 whitespace-nowrap" style="min-width: 100px;">
+                ${formatDate(item.tanggalSelesai)}
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 140px;">
+                <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs inline-block" title="${serviceName}">${serviceName}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 120px;">
+                <span class="px-2 py-1 bg-green-50 text-green-700 rounded text-xs inline-block" title="${serviceCategory}">${serviceCategory}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 text-center font-medium" style="min-width: 60px;">
+                ${item.jumlahKg || 0} kg
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 whitespace-nowrap" style="min-width: 100px;">
+                ${item.tanggalAmbil !== '-' ? formatDate(item.tanggalAmbil) : '-'}
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 whitespace-nowrap" style="min-width: 100px;">
+                ${item.tanggalBayar !== '-' ? formatDate(item.tanggalBayar) : '-'}
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 text-center" style="min-width: 100px;">
+                <span class="px-2 py-1 ${paymentClass} rounded-full text-xs font-medium inline-block">${paymentDisplay}</span>
+            </td>
+            <td class="py-3 px-4 text-sm border-b border-gray-100 text-right font-semibold text-green-600" style="min-width: 120px;">
+                ${formatRupiah(item.harga || 0)}
+            </td>
+        </tr>`;
     }).join('');
     
     const dataCount = document.getElementById('dataCount');
@@ -611,7 +651,7 @@ function renderTable() {
 }
 
 // ===============================
-// Pagination
+// Pagination with Tailwind
 // ===============================
 function updatePagination() {
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -627,7 +667,9 @@ function updatePagination() {
     let paginationHTML = '';
     
     if (currentPage > 1) {
-        paginationHTML += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')"><i class="fas fa-chevron-left"></i></button>';
+        paginationHTML += `<button class="px-3 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-l-md transition-colors" onclick="goToPage(${currentPage - 1})">
+            <i class="fas fa-chevron-left"></i>
+        </button>`;
     }
     
     const maxVisiblePages = 5;
@@ -639,11 +681,14 @@ function updatePagination() {
     }
     
     for (let i = startPage; i <= endPage; i++) {
-        paginationHTML += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+        const activeClass = i === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
+        paginationHTML += `<button class="px-3 py-1 border ${activeClass} transition-colors" onclick="goToPage(${i})">${i}</button>`;
     }
     
     if (currentPage < totalPages) {
-        paginationHTML += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')"><i class="fas fa-chevron-right"></i></button>';
+        paginationHTML += `<button class="px-3 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-r-md transition-colors" onclick="goToPage(${currentPage + 1})">
+            <i class="fas fa-chevron-right"></i>
+        </button>`;
     }
     
     paginationContainer.innerHTML = paginationHTML;
@@ -723,7 +768,7 @@ function exportExcel() {
 }
 
 // ===============================
-// Auto Refresh Data - UPDATED
+// Auto Refresh Data
 // ===============================
 setInterval(async function() {
     const prevDataLength = allData.length;
@@ -749,14 +794,14 @@ setInterval(async function() {
     if (hasUpdates) {
         console.log('Auto-refresh at:', new Date().toLocaleTimeString());
     }
-}, 30000);// Refresh every 30 seconds
+}, 30000);
 
 // ===============================
 // Global Functions
 // ===============================
-window.getServicePrices = getServicePrices;
 window.getServicePrice = getServicePrice;
 window.getServicePriceByCategory = getServicePriceByCategory;
+window.getServicePriceByIdCategory = getServicePriceByIdCategory;
 window.togglePricingTable = togglePricingTable;
 window.openAddServiceModal = openAddServiceModal;
 window.closeAddServiceModal = closeAddServiceModal;

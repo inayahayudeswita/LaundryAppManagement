@@ -30,7 +30,7 @@
             </button>
         </div>
 
-        <!-- On Progress Tab -->w
+        <!-- On Progress Tab -->
         <div id="onprogress-tab" class="tab-content active">
             <div class="panel">
                 <div class="panel-header">
@@ -40,7 +40,7 @@
                     </h2>
                     <div class="header-actions">
                         <div class="search-box">
-                            <input type="text" id="searchOnProgress" placeholder="Cari nomor nota, nama, atau jenis..." 
+                            <input type="text" id="searchOnProgress" placeholder="Cari nomor nota, nama, atau layanan..." 
                                    onkeyup="performSearch('onprogress')" class="search-input">
                             <i class="fas fa-search search-icon"></i>
                         </div>
@@ -56,12 +56,12 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>UID</th>
                                     <th>No. Nota</th>
                                     <th>Pelanggan</th>
                                     <th>Tgl Terima</th>
                                     <th>Tgl Selesai</th>
-                                    <th>Jenis</th>
+                                    <th>Layanan</th>
+                                    <th>Jenis Service</th>
                                     <th>Kg</th>
                                     <th>Harga</th>
                                     <th>Pembayaran</th>
@@ -85,7 +85,7 @@
                     </h2>
                     <div class="header-actions">
                         <div class="search-box">
-                            <input type="text" id="searchFinished" placeholder="Cari nomor nota, nama, atau jenis..." 
+                            <input type="text" id="searchFinished" placeholder="Cari nomor nota, nama, atau layanan..." 
                                    onkeyup="performSearch('finished')" class="search-input">
                             <i class="fas fa-search search-icon"></i>
                         </div>
@@ -97,12 +97,12 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>UID</th>
                                     <th>No. Nota</th>
                                     <th>Pelanggan</th>
                                     <th>Tgl Terima</th>
                                     <th>Tgl Selesai</th>
-                                    <th>Jenis</th>
+                                    <th>Layanan</th>
+                                    <th>Jenis Service</th>
                                     <th>Kg</th>
                                     <th>Tgl Ambil</th>
                                     <th>Tgl Bayar</th>
@@ -119,88 +119,158 @@
         </div>
 
         <!-- Add/Edit Form Modal -->
-         <div id="formModal" class="modal">
+        <div id="formModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modalTitle">Tambah Data Laundry</h3>
+                    <h3 id="modalTitle">
+                        <i class="fas fa-plus-circle"></i>
+                        Tambah Data Laundry
+                    </h3>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label">Nomor Nota</label>
-                        <input type="text" id="nomorNota" class="form-input" readonly>
-                        <div class="price-info">
-                            <i class="fas fa-info-circle"></i> Nomor nota otomatis berdasarkan tanggal
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Pelanggan</label>
-                        <input type="text" id="namaPelanggan" class="form-input" required>
-                    </div>
-                    <div class="form-grid">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-receipt"></i>
+                            Informasi Nota
+                        </h4>
                         <div class="form-group">
-                            <label class="form-label">Tanggal Terima</label>
-                            <input type="date" id="tanggalTerima" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tanggal Selesai</label>
-                            <input type="date" id="tanggalSelesai" class="form-input" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Layanan</label>
-                        <select id="serviceName" class="form-input" required>
-                            <option value="">Pilih Layanan</option>
-                            <!-- Options will be populated dynamically from database -->
-                        </select>
-                        <div class="price-info">
-                            <i class="fas fa-info-circle"></i> Layanan diambil dari database admin
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Jenis Service</label>
-                        <select id="jenisLaundry" class="form-input" required disabled>
-                            <option value="">Pilih Jenis Service</option>
-                            <!-- Contoh hasil JS setelah load -->
-                            <option value="2" data-name="Regular">Regular</option>
-                            <option value="3" data-name="Exp 2 Hari">Exp 2 Hari</option>
-                            <option value="4" data-name="Exp 1 Hari">Exp 1 Hari</option>
-                            <option value="5" data-name="Exp 6 Jam">Exp 6 Jam</option>
-                        </select>
-                        <div class="price-info">
-                            <i class="fas fa-info-circle"></i> Pilih layanan terlebih dahulu untuk melihat jenis yang tersedia
-                        </div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Jumlah (Kg)</label>
-                            <input type="number" step="0.1" id="jumlahKg" class="form-input" required>
+                            <label class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Nomor Nota
+                            </label>
+                            <input type="text" id="nomorNota" class="form-input" readonly>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Nomor nota otomatis berdasarkan format: LRK-PWK-YYMMDD-XXX
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Harga (Rp)</label>
-                            <input type="number" id="harga" class="form-input" required readonly>
-                            <div class="price-info">
-                                <i class="fas fa-info-circle"></i> Harga otomatis berdasarkan jenis & kg
+                            <label class="form-label">
+                                <i class="fas fa-user"></i>
+                                Nama Pelanggan
+                            </label>
+                            <input type="text" id="namaPelanggan" class="form-input" required 
+                                   placeholder="Masukkan nama pelanggan">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Jadwal Laundry
+                        </h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Tanggal Terima
+                                </label>
+                                <input type="date" id="tanggalTerima" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-day"></i>
+                                    Tanggal Selesai
+                                </label>
+                                <input type="date" id="tanggalSelesai" class="form-input" required>
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Metode Pembayaran</label>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-cogs"></i>
+                            Layanan
+                        </h4>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-list"></i>
+                                Nama Layanan
+                            </label>
+                            <select id="serviceName" class="form-input" required>
+                                <option value="">Pilih Layanan</option>
+                            </select>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Layanan diambil dari database admin
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tags"></i>
+                                Jenis Service
+                            </label>
+                            <select id="jenisLaundry" class="form-input" required disabled>
+                                <option value="">Pilih Jenis Service</option>
+                            </select>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Pilih layanan terlebih dahulu untuk melihat jenis yang tersedia
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calculator"></i>
+                            Kalkulasi
+                        </h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-weight"></i>
+                                    Jumlah (Kg)
+                                </label>
+                                <input type="number" step="0.1" id="jumlahKg" class="form-input" required 
+                                       placeholder="0.0" min="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Total Harga
+                                </label>
+                                <input type="number" id="harga" class="form-input" required readonly>
+                                <div class="input-info">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Harga otomatis berdasarkan jenis layanan & berat
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-credit-card"></i>
+                            Metode Pembayaran
+                        </h4>
                         <div class="payment-options">
                             <div class="payment-option" onclick="selectPayment('none', 'form')">
                                 <input type="radio" name="formPayment" value="none" id="formNone">
-                                <label for="formNone"><i class="fas fa-clock"></i> Belum Bayar</label>
+                                <label for="formNone">
+                                    <i class="fas fa-clock"></i> 
+                                    <span>Belum Bayar</span>
+                                </label>
                             </div>
                             <div class="payment-option" onclick="selectPayment('cash', 'form')">
                                 <input type="radio" name="formPayment" value="cash" id="formCash">
-                                <label for="formCash"><i class="fas fa-money-bill"></i> Cash</label>
+                                <label for="formCash">
+                                    <i class="fas fa-money-bill"></i> 
+                                    <span>Cash</span>
+                                </label>
                             </div>
                             <div class="payment-option" onclick="selectPayment('transfer', 'form')">
                                 <input type="radio" name="formPayment" value="transfer" id="formTransfer">
-                                <label for="formTransfer"><i class="fas fa-university"></i> Transfer</label>
+                                <label for="formTransfer">
+                                    <i class="fas fa-university"></i> 
+                                    <span>Transfer</span>
+                                </label>
                             </div>
                             <div class="payment-option" onclick="selectPayment('qris', 'form')">
                                 <input type="radio" name="formPayment" value="qris" id="formQris">
-                                <label for="formQris"><i class="fas fa-qrcode"></i> QRIS</label>
+                                <label for="formQris">
+                                    <i class="fas fa-qrcode"></i> 
+                                    <span>QRIS</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -218,38 +288,64 @@
             </div>
         </div>
 
-
         <!-- Finish Modal -->
         <div id="finishModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Selesaikan Laundry</h3>
+                    <h3>
+                        <i class="fas fa-check-circle"></i>
+                        Selesaikan Laundry
+                    </h3>
                 </div>
                 <div class="modal-body">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Tanggal Ambil</label>
-                            <input type="date" id="finishTanggalAmbil" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tanggal Bayar</label>
-                            <input type="date" id="finishTanggalBayar" class="form-input" required>
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Tanggal Penyelesaian
+                        </h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Tanggal Ambil
+                                </label>
+                                <input type="date" id="finishTanggalAmbil" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-day"></i>
+                                    Tanggal Bayar
+                                </label>
+                                <input type="date" id="finishTanggalBayar" class="form-input" required>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Metode Pembayaran *</label>
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-credit-card"></i>
+                            Metode Pembayaran
+                        </h4>
                         <div class="payment-options">
                             <div class="payment-option" onclick="selectPayment('cash', 'finish')">
                                 <input type="radio" name="payment" value="cash" id="cash">
-                                <label for="cash"><i class="fas fa-money-bill"></i> Cash</label>
+                                <label for="cash">
+                                    <i class="fas fa-money-bill"></i> 
+                                    <span>Cash</span>
+                                </label>
                             </div>
                             <div class="payment-option" onclick="selectPayment('transfer', 'finish')">
                                 <input type="radio" name="payment" value="transfer" id="transfer">
-                                <label for="transfer"><i class="fas fa-university"></i> Transfer</label>
+                                <label for="transfer">
+                                    <i class="fas fa-university"></i> 
+                                    <span>Transfer</span>
+                                </label>
                             </div>
                             <div class="payment-option" onclick="selectPayment('qris', 'finish')">
                                 <input type="radio" name="payment" value="qris" id="qris">
-                                <label for="qris"><i class="fas fa-qrcode"></i> QRIS</label>
+                                <label for="qris">
+                                    <i class="fas fa-qrcode"></i> 
+                                    <span>QRIS</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -271,7 +367,10 @@
         <div id="receiptModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Struk Laundry</h3>
+                    <h3>
+                        <i class="fas fa-receipt"></i>
+                        Struk Laundry
+                    </h3>
                 </div>
                 <div class="modal-body">
                     <div class="receipt" id="receipt">

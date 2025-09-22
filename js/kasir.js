@@ -9,6 +9,7 @@ let servicesData = [];
 let currentFinishUid = null;
 let ordersData = []; // Global variable to store orders data
 let editingUid = null;
+
 // Initialize User & Branch
 function initializeUser() {
     const userData = sessionStorage.getItem("currentUser");
@@ -26,7 +27,7 @@ function initializeUser() {
     }
 }
 
-// Auto Number Generation System
+// Auto Number Generation System - Updated Format: LRK-PWK-YYMMDD-XXX
 function generateAutoNumber(date = new Date()) {
     const dateStr = formatDateForNumber(date);
     const key = `autoNumber_${CABANG}_${dateStr}`;
@@ -35,7 +36,8 @@ function generateAutoNumber(date = new Date()) {
     currentNumber++;
     localStorage.setItem(key, currentNumber.toString());
     
-    return `${dateStr}-${currentNumber.toString().padStart(3, '0')}`;
+    // New format: LRK-PWK-YYMMDD-XXX
+    return `LRK-PWK-${dateStr}-${currentNumber.toString().padStart(3, '0')}`;
 }
 
 function formatDateForNumber(date) {
@@ -74,7 +76,7 @@ async function saveOrderToDB(data) {
 // ===============================
 async function loadServices() {
     try {
-        const res = await fetch("backend/get_services.php"); // endpoint baru ambil services+prices
+        const res = await fetch("backend/get_services.php");
         const data = await res.json();
         
         if (data.success) {
@@ -91,7 +93,7 @@ async function loadServices() {
                 serviceSelect.appendChild(opt);
             });
 
-            // pas pilih layanan
+            // Event listener untuk service selection
             serviceSelect.addEventListener("change", function() {
                 const serviceId = parseInt(this.value);
                 const service = servicesData.find(s => s.id === serviceId);
@@ -101,166 +103,77 @@ async function loadServices() {
                 categorySelect.disabled = true;
 
                 if (service && service.prices) {
-                    Object.keys(service.prices).forEach(cat => {
+                    Object.entries(service.prices).forEach(([categoryName, info]) => {
                         const opt = document.createElement("option");
-                        opt.value = cat;
-                        opt.textContent = `${cat} - Rp ${service.prices[cat].toLocaleString("id-ID")}/kg`;
-                        opt.dataset.price = service.prices[cat]; // simpan harga per kg
-                        opt.dataset.categoryId = service.prices_id ? service.prices_id[cat] : 0;
+                        opt.value = info.id; // Use category ID as value
+                        opt.textContent = `${categoryName} - ${formatRupiah(info.price)}/kg`;
+                        opt.dataset.price = info.price;
+                        opt.dataset.categoryName = categoryName;
                         categorySelect.appendChild(opt);
                     });
                     categorySelect.disabled = false;
                 }
+                
+                calculatePrice(); // Recalculate when service changes
             });
+            
+            // Event listener untuk category selection
+            document.getElementById("jenisLaundry").addEventListener("change", calculatePrice);
+            document.getElementById("jumlahKg").addEventListener("input", calculatePrice);
         }
     } catch (err) {
         console.error("Error load services:", err);
     }
 }
 
-// Populate service dropdown with dynamic data
-function populateServiceOptions() {
-    const serviceSelect = document.getElementById('serviceName');
-    const categorySelect = document.getElementById('jenisLaundry');
-    if (!serviceSelect) return;
-
-    serviceSelect.innerHTML = '<option value="">Pilih Layanan</option>';
-    servicesData.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id; // service id
-        opt.textContent = s.service_name;
-        serviceSelect.appendChild(opt);
-    });
-
-    // clear category
-    if (categorySelect) {
-        categorySelect.innerHTML = '<option value="">Pilih Jenis Service</option>';
-        categorySelect.disabled = true;
-    }
-
-    // bind change jika belum ada
-    serviceSelect.onchange = () => updateCategoryOptions();
-}
-
-
-// Update category options based on selected service
-function updateCategoryOptions() {
-    const serviceSelect = document.getElementById('serviceName');
-    const categorySelect = document.getElementById('jenisLaundry');
-    if (!serviceSelect || !categorySelect) return;
-
-    categorySelect.innerHTML = '<option value="">Pilih Jenis Service</option>';
-    const sid = parseInt(serviceSelect.value) || 0;
-    if (!sid) {
-        categorySelect.disabled = true;
-        calculatePrice();
-        return;
-    }
-
-    const svc = servicesData.find(s => s.id === sid);
-    if (!svc) {
-        categorySelect.disabled = true;
-        return;
-    }
-
-    Object.entries(svc.prices).forEach(([categoryName, info]) => {
-        const opt = document.createElement('option');
-        opt.value = info.id; // value = category_id
-        opt.textContent = `${categoryName} - ${formatRupiah(info.price)}/kg`;
-        opt.dataset.categoryName = categoryName;
-        opt.dataset.categoryId = info.id;
-        opt.dataset.price = info.price ? String(info.price) : "0"; // <-- pastikan string angka
-        categorySelect.appendChild(opt);
-    });
-
-    categorySelect.disabled = false;
-
-    categorySelect.onchange = () => calculatePrice();
-    const jumlahKgEl = document.getElementById('jumlahKg');
-    if (jumlahKgEl) jumlahKgEl.oninput = () => calculatePrice();
-
-    calculatePrice();
-}
-
-
-
-
-// Ambil harga berdasarkan serviceId dan categoryName
-function getServicePriceByIdCategory(serviceId, categoryName) {
-    const svc = servicesData.find(s => s.id === parseInt(serviceId));
-    if (!svc) return 0;
-    return svc.prices[categoryName] || 0; // langsung angka
-}
-
 // Get service name by ID
 function getServiceNameById(serviceId) {
-    if (!serviceId) return 'Unknown Service';
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     return service ? service.service_name : 'Unknown Service';
 }
 
+// Get category name by service ID and category ID
 function getCategoryNameById(serviceId, categoryId) {
-    if (!serviceId || !categoryId) return 'Unknown Category';
-    
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     if (!service || !service.prices) return 'Unknown Category';
     
-    // Cari category berdasarkan categoryId
-    for (const [catName, catInfo] of Object.entries(service.prices)) {
-        if (catInfo.id === parseInt(categoryId)) {
-            return catName;
-        }
+    for (const [categoryName, info] of Object.entries(service.prices)) {
+        if (info.id == categoryId) return categoryName;
     }
-    
     return 'Unknown Category';
 }
 
-function getPricePerKgById(serviceId, categoryId) {
-    if (!serviceId || !categoryId) return 0;
-    
+// Get service price by service ID and category ID
+function getServicePriceByIdCategory(serviceId, categoryId) {
     const service = servicesData.find(s => s.id === parseInt(serviceId));
     if (!service || !service.prices) return 0;
     
-    // Cari category berdasarkan categoryId
-    for (const [catName, catInfo] of Object.entries(service.prices)) {
-        if (catInfo.id === parseInt(categoryId)) {
-            return catInfo.price || 0;
-        }
+    for (const [categoryName, info] of Object.entries(service.prices)) {
+        if (info.id == categoryId) return info.price;
     }
-    
     return 0;
 }
 
-
-// Hitung total harga
+// Calculate total price
 function calculatePrice() {
-    const serviceSelect = document.getElementById("serviceName");
-    const categorySelect = document.getElementById("jenisLaundry");
-    const jumlahKg = parseFloat(document.getElementById("jumlahKg").value) || 0;
-    const hargaInput = document.getElementById("harga");
+    const serviceSelect = document.getElementById('serviceName');
+    const categorySelect = document.getElementById('jenisLaundry');
+    const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
+    const hargaInput = document.getElementById('harga');
 
-    const selectedOpt = categorySelect.options[categorySelect.selectedIndex];
-    const pricePerKg = selectedOpt ? parseInt(selectedOpt.dataset.price || "0") : 0;
+    const serviceId = serviceSelect ? parseInt(serviceSelect.value) : 0;
+    const categoryId = categorySelect ? categorySelect.value : '';
 
-    console.log("DEBUG calculatePrice:", {
-        serviceId: serviceSelect.value,
-        categoryId: categorySelect.value,
-        pricePerKg,
-        jumlahKg
-    });
-
-    if (serviceSelect.value && categorySelect.value && jumlahKg > 0 && pricePerKg > 0) {
+    if (serviceId && categoryId && jumlahKg > 0) {
+        const pricePerKg = getServicePriceByIdCategory(serviceId, categoryId);
         const totalHarga = pricePerKg * jumlahKg;
         hargaInput.value = totalHarga;
-        hargaInput.dataset.pricePerKg = pricePerKg;
+        hargaInput.dataset.pricePerKg = pricePerKg; 
     } else {
-        hargaInput.value = "";
+        hargaInput.value = '';
         hargaInput.dataset.pricePerKg = 0;
     }
 }
-
-
-
 
 // ===============================
 // LOAD ORDERS FUNCTION
@@ -314,53 +227,16 @@ function generateReceipt(data) {
     
     receiptBranch.textContent = CABANG;
     
-    // Get service and category names for display - IMPROVED LOGIC
+    // Get service and category names for display
     let serviceName = 'Unknown Service';
     let categoryName = 'Unknown Category';
     let pricePerKg = 0;
     
-    console.log('DEBUG generateReceipt data:', data); // Debug log
-    
-    // Prioritas 1: Gunakan yang sudah ada di data (dari backend)
-    if (data.serviceName && data.serviceName !== 'Unknown Service') {
-        serviceName = data.serviceName;
+    if (data.serviceId && data.categoryId) {
+        serviceName = getServiceNameById(data.serviceId);
+        categoryName = getCategoryNameById(data.serviceId, data.categoryId);
+        pricePerKg = getServicePriceByIdCategory(data.serviceId, data.categoryId);
     }
-    if (data.categoryName && data.categoryName !== 'Unknown Category') {
-        categoryName = data.categoryName;
-    }
-    if (data.pricePerKg && data.pricePerKg > 0) {
-        pricePerKg = data.pricePerKg;
-    }
-    
-    // Prioritas 2: Jika masih unknown, coba ambil dari servicesData
-    if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category' || pricePerKg === 0) && 
-        data.serviceId && data.categoryId) {
-        
-        const service = servicesData.find(s => s.id === parseInt(data.serviceId));
-        if (service) {
-            serviceName = service.service_name;
-            
-            // Cari category berdasarkan categoryId
-            Object.entries(service.prices).forEach(([catName, catInfo]) => {
-                if (catInfo.id === parseInt(data.categoryId)) {
-                    categoryName = catName;
-                    pricePerKg = catInfo.price || 0;
-                }
-            });
-        }
-    }
-    
-    // Prioritas 3: Fallback jika masih 0, hitung dari total harga
-    if (pricePerKg === 0 && data.harga && data.jumlahKg) {
-        pricePerKg = parseInt(data.harga) / parseFloat(data.jumlahKg);
-    }
-    
-    console.log('Receipt display values:', {
-        serviceName,
-        categoryName,
-        pricePerKg,
-        totalHarga: data.harga
-    });
     
     receiptContent.innerHTML = `
         <div class="receipt-row">
@@ -480,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initializeUser();
     await loadOrders();
 
-    // set default tanggal hari ini
+    // Set default tanggal hari ini
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalTerima').value = today;
 
@@ -490,11 +366,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (document.getElementById('finishTanggalBayar')) {
         document.getElementById('finishTanggalBayar').value = today;
     }
-
-    // Event listeners
-    document.getElementById('serviceName').addEventListener('change', updateCategoryOptions);
-    document.getElementById('jenisLaundry').addEventListener('change', calculatePrice);
-    document.getElementById('jumlahKg').addEventListener('input', calculatePrice);
 });
 
 // Tab Management
@@ -541,7 +412,7 @@ function selectPayment(method, context) {
 }
 
 // ===============================
-// TABLE RENDERING - UPDATED
+// TABLE RENDERING - UPDATED WITHOUT UID
 // ===============================
 function renderOnProgressTable(data) {
     const tbody = document.getElementById('onProgressTable');
@@ -556,39 +427,32 @@ function renderOnProgressTable(data) {
             paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
         }
 
-        // Gunakan data yang sudah ada di backend, atau fallback ke servicesData
-        let serviceName = item.serviceName || 'Unknown Service';
-        let categoryName = item.categoryName || 'Unknown Category';
-        
-        // Jika masih unknown, coba ambil dari servicesData
-        if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category') && 
-            item.serviceId && item.categoryId) {
-            serviceName = getServiceNameById(item.serviceId);
-            categoryName = getCategoryNameById(item.serviceId, item.categoryId);
-        }
+        // Get service and category names
+        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
+        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
 
         return `
             <tr>
-                <td><span class="nota-code">${item.uid}</span></td>
                 <td><span class="nota-code">${item.nomorNota}</span></td>
                 <td>${item.namaPelanggan}</td>
                 <td>${formatDate(item.tanggalTerima)}</td>
                 <td>${formatDate(item.tanggalSelesai)}</td>
-                <td><span class="jenis-badge">${serviceName} - ${categoryName}</span></td>
+                <td><span class="service-badge">${serviceName}</span></td>
+                <td><span class="jenis-badge">${categoryName}</span></td>
                 <td>${item.jumlahKg} kg</td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>${paymentDisplay}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak">
+                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak Struk">
                             <i class="fas fa-print"></i>
                         </button>
-                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit">
+                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit Data">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button class="btn-icon finish" 
                                 onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
-                                title="Selesai">
+                                title="Selesaikan">
                             <i class="fas fa-check"></i>
                         </button>
                     </div>
@@ -598,7 +462,6 @@ function renderOnProgressTable(data) {
     }).join('');
 }
 
-// UPDATED: Render Finished Table dengan data yang lebih akurat
 function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
     if (!orders || orders.length === 0) {
@@ -607,33 +470,26 @@ function renderFinishedTable(orders) {
     }
 
     tbody.innerHTML = orders.map((item) => {
-        // Gunakan data yang sudah ada di backend, atau fallback ke servicesData
-        let serviceName = item.serviceName || 'Unknown Service';
-        let categoryName = item.categoryName || 'Unknown Category';
-        
-        // Jika masih unknown, coba ambil dari servicesData
-        if ((serviceName === 'Unknown Service' || categoryName === 'Unknown Category') && 
-            item.serviceId && item.categoryId) {
-            serviceName = getServiceNameById(item.serviceId);
-            categoryName = getCategoryNameById(item.serviceId, item.categoryId);
-        }
+        // Get service and category names
+        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
+        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
 
         return `
             <tr>
-                <td>${item.uid}</td>
-                <td>${item.nomorNota}</td>
+                <td><span class="nota-code">${item.nomorNota}</span></td>
                 <td>${item.namaPelanggan}</td>
                 <td>${formatDate(item.tanggalTerima)}</td>
                 <td>${formatDate(item.tanggalSelesai)}</td>
-                <td>${serviceName} - ${categoryName}</td>
+                <td><span class="service-badge">${serviceName}</span></td>
+                <td><span class="jenis-badge">${categoryName}</span></td>
                 <td>${item.jumlahKg} kg</td>
                 <td>${formatDate(item.tanggalAmbil)}</td>
                 <td>${formatDate(item.tanggalBayar)}</td>
-                <td>${item.payment || "-"}</td>
+                <td><span class="jenis-badge">${item.payment ? item.payment.toUpperCase() : "-"}</span></td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon print" onclick='printFinishedOrder(${JSON.stringify(item)})' title="Cetak">
+                        <button class="btn-icon print" onclick='printFinishedOrder(${JSON.stringify(item)})' title="Cetak Struk">
                             <i class="fas fa-print"></i>
                         </button>
                     </div>
@@ -642,7 +498,6 @@ function renderFinishedTable(orders) {
         `;
     }).join('');
 }
-
 
 function printFinishedOrder(order) {
     showReceiptModal(order);
@@ -655,7 +510,7 @@ function showForm() {
     const modal = document.getElementById('formModal');
     modal.dataset.uid = "";  // Clear uid for add mode
     
-    document.getElementById('modalTitle').textContent = "Tambah Data Laundry";
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Data Laundry';
     document.getElementById('saveButtonText').textContent = "Simpan";
     
     clearForm();
@@ -697,7 +552,7 @@ function clearForm() {
 async function saveData() {
     try {
         const modal = document.getElementById('formModal');
-        const uidEdit = modal?.dataset?.uid || null; // kalau edit, modal dataset.uid di-set di editData()
+        const uidEdit = modal?.dataset?.uid || null;
         const uid = uidEdit || generateUID();
 
         const nomorNota = document.getElementById('nomorNota').value || generateAutoNumber();
@@ -707,7 +562,7 @@ async function saveData() {
         const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
         const categorySelect = document.getElementById('jenisLaundry');
         const categoryId = parseInt(categorySelect?.value || 0);
-        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || '';
+        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || getCategoryNameById(serviceId, categoryId);
         const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
         const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
         const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
@@ -766,8 +621,6 @@ async function saveData() {
     }
 }
 
-
-
 // ===============================
 // EDIT DATA FUNCTION - UPDATED
 // ===============================
@@ -788,32 +641,49 @@ function editData(uid) {
         return;
     }
 
-    // isi form
+    // Isi form
     document.getElementById('nomorNota').value = item.nomorNota || '';
     document.getElementById('namaPelanggan').value = item.namaPelanggan || '';
     document.getElementById('tanggalTerima').value = item.tanggalTerima || '';
     document.getElementById('tanggalSelesai').value = item.tanggalSelesai || '';
-    // set service
+    
+    // Set service
     if (item.serviceId) {
         document.getElementById('serviceName').value = item.serviceId;
-        updateCategoryOptions(); // akan populate jenis laundry
-        // setelah populate, set categoryId (option.value adalah category_id)
-        const catSelect = document.getElementById('jenisLaundry');
-        if (catSelect && item.categoryId) {
-            catSelect.value = item.categoryId;
-        }
+        // Trigger change event to populate categories
+        const event = new Event('change', { bubbles: true });
+        document.getElementById('serviceName').dispatchEvent(event);
+        
+        // After a short delay, set the category
+        setTimeout(() => {
+            const catSelect = document.getElementById('jenisLaundry');
+            if (catSelect && item.categoryId) {
+                catSelect.value = item.categoryId;
+            }
+        }, 100);
     }
+    
     document.getElementById('jumlahKg').value = item.jumlahKg || '';
     document.getElementById('harga').value = item.harga || '';
-    // set payment radio
-    const radio = document.querySelector(`input[name="formPayment"][value="${item.payment || 'none'}"]`);
-    if (radio) radio.checked = true;
+    
+    // Set payment radio
+    const paymentOptions = document.querySelectorAll('#formModal .payment-option');
+    const paymentRadios = document.querySelectorAll('input[name="formPayment"]');
+    
+    paymentOptions.forEach(option => option.classList.remove('selected'));
+    paymentRadios.forEach(radio => radio.checked = false);
+    
+    const selectedRadio = document.querySelector(`input[name="formPayment"][value="${item.payment || 'none'}"]`);
+    if (selectedRadio) {
+        selectedRadio.checked = true;
+        selectedRadio.closest('.payment-option').classList.add('selected');
+    }
 
-    // ubah title & button text
-    document.getElementById('modalTitle').textContent = 'Edit Data Laundry';
+    // Update modal title & button
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Data Laundry';
     document.getElementById('saveButtonText').textContent = 'Update';
 
-    // tampilkan modal
+    // Show modal
     document.getElementById('formModal').classList.add('show');
 }
 
@@ -935,9 +805,9 @@ function performSearch(type) {
             const filteredData = allOnProgress.filter(item => 
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
+                getServiceNameById(item.serviceId).toLowerCase().includes(searchTerm) ||
+                getCategoryNameById(item.serviceId, item.categoryId).toLowerCase().includes(searchTerm)
             );
             renderOnProgressTable(filteredData);
         }
@@ -949,9 +819,9 @@ function performSearch(type) {
             const filteredData = allFinished.filter(item =>
                 item.nomorNota.toLowerCase().includes(searchTerm) ||
                 item.namaPelanggan.toLowerCase().includes(searchTerm) ||
-                item.jenisLaundry.toLowerCase().includes(searchTerm) ||
                 item.uid.toLowerCase().includes(searchTerm) ||
-                getServiceNameById(item.serviceName).toLowerCase().includes(searchTerm)
+                getServiceNameById(item.serviceId).toLowerCase().includes(searchTerm) ||
+                getCategoryNameById(item.serviceId, item.categoryId).toLowerCase().includes(searchTerm)
             );
             renderFinishedTable(filteredData);
         }

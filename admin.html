@@ -4,145 +4,250 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Dashboard - Sistem Laundry</title>
-  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body>
+<body class="bg-gray-50 font-sans">
   <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="#" class="nav-brand">
-        <i class="fas fa-tshirt"></i> Laundry Abdan
-      </a>
-      <div class="nav-user">
-        <span id="adminName">Admin</span>
-        <button class="btn-logout" onclick="logout()">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
+  <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <a href="#" class="flex items-center space-x-2 text-xl font-bold text-gray-900">
+          <i class="fas fa-tshirt text-blue-600"></i>
+          <span>Laundry Abdan</span>
+        </a>
+        <div class="flex items-center space-x-4">
+          <span id="adminName" class="text-gray-600 font-medium">Admin</span>
+          <button 
+            onclick="logout()" 
+            class="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   </nav>
 
   <!-- CONTAINER -->
-  <div class="container">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- STATS -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon revenue"><i class="fas fa-dollar-sign"></i></div>
-        <div class="stat-info">
-          <h3 id="totalRevenue">Rp 0</h3>
-          <p>Total Pendapatan</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Revenue Card -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-dollar-sign text-white text-2xl"></i>
+          </div>
+          <div class="ml-6">
+            <h3 id="totalRevenue" class="text-3xl font-bold text-gray-900">Rp 0</h3>
+            <p class="text-gray-600 text-sm font-medium">Total Pendapatan</p>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon branches"><i class="fas fa-store"></i></div>
-        <div class="stat-info">
-          <h3 id="totalBranches">2</h3>
-          <p>Cabang Aktif</p>
+
+      <!-- Branches Card -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-store text-white text-2xl"></i>
+          </div>
+          <div class="ml-6">
+            <h3 id="totalBranches" class="text-3xl font-bold text-gray-900">2</h3>
+            <p class="text-gray-600 text-sm font-medium">Cabang Aktif</p>
+          </div>
         </div>
       </div>
-      <!-- PRICING CARD -->
-      <div class="pricing-card" onclick="togglePricingTable()">
-        <div class="pricing-header">
-          <div class="pricing-title">
-            <div class="pricing-icon">
-              <i class="fas fa-tags"></i>
+
+      <!-- Pricing Card -->
+      <div 
+        onclick="togglePricingTable()" 
+        class="bg-gradient-to-br from-blue-600 to-purple-700 rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-white">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <i class="fas fa-tags text-white text-lg"></i>
             </div>
             <div>
-              <h3 style="margin: 0; font-size: 18px;">Daftar Harga</h3>
-              <p class="pricing-subtitle">Kelola harga layanan</p>
+              <h3 class="text-lg font-semibold">Daftar Harga</h3>
+              <p class="text-blue-100 text-sm opacity-90">Kelola harga layanan</p>
             </div>
           </div>
-          <button class="pricing-toggle" id="pricingToggle">
-            <i class="fas fa-chevron-down"></i>
+          <button id="pricingToggle" class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-all duration-300">
+            <i class="fas fa-chevron-down text-white"></i>
           </button>
         </div>
-        <div class="pricing-stats">
-          <div class="pricing-stat">
-            <p class="pricing-stat-value" id="serviceCount">6</p>
-            <p class="pricing-stat-label">Layanan</p>
+        <div class="flex space-x-6">
+          <div class="text-center">
+            <p id="serviceCount" class="text-2xl font-bold">6</p>
+            <p class="text-blue-100 text-xs opacity-90">Layanan</p>
           </div>
-          <div class="pricing-stat">
-            <p class="pricing-stat-value" id="avgPrice">Rp 8K</p>
-            <p class="pricing-stat-label">Rata-rata</p>
+          <div class="text-center">
+            <p id="avgPrice" class="text-2xl font-bold">Rp 8K</p>
+            <p class="text-blue-100 text-xs opacity-90">Rata-rata</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ========== TABEL SERVICE BARU ========== -->
-    <div class="pricing-table-container" id="pricingTableContainer">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-        <h3 style="margin:0;color:#2c3e50;">
-          <i class="fas fa-tags" style="color:#667eea;margin-right:8px;"></i>
+    <!-- SERVICE PRICING TABLE -->
+    <div id="pricingTableContainer" class="hidden mb-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <i class="fas fa-tags text-blue-600 mr-3"></i>
           Kelola Harga Layanan
         </h3>
-        <button class="btn btn-success" onclick="openAddServiceModal()">
-          <i class="fas fa-plus"></i> Tambah Layanan
+        <button 
+          onclick="openAddServiceModal()" 
+          class="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-medium">
+          <i class="fas fa-plus"></i>
+          <span>Tambah Layanan</span>
         </button>
       </div>
-      <table class="pricing-table" id="servicesTable">
-        <thead>
-          <tr>
-            <th>Nama Service</th>
-            <th>Regular</th>
-            <th>Exp 2 Hari</th>
-            <th>Exp 1 Hari</th>
-            <th>Exp 6 Jam</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="serviceTableBody">
-          <!-- diisi via JS -->
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Nama Service</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Regular</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Exp 2 Hari</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Exp 1 Hari</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Exp 6 Jam</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 border-b-2 border-gray-200">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="serviceTableBody">
+            <!-- diisi via JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-        <!-- Modal Tambah Service -->
-    <div class="modal" id="addServiceModal">
-      <div class="modal-content">
-        <h3>Tambah Layanan Baru</h3>
-        <form id="addServiceForm">
-          <label>Nama Service:</label>
-          <input type="text" name="service_name" required><br><br>
+    <!-- Modal Tambah Service -->
+    <div id="addServiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-gray-900">Tambah Layanan Baru</h3>
+          <button onclick="closeAddServiceModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <form id="addServiceForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Service:</label>
+            <input 
+              type="text" 
+              name="service_name" 
+              required 
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
 
-          <label>Regular:</label>
-          <input type="number" name="regular" required><br>
-          <label>Exp 2 Hari:</label>
-          <input type="number" name="exp2" required><br>
-          <label>Exp 1 Hari:</label>
-          <input type="number" name="exp1" required><br>
-          <label>Exp 6 Jam:</label>
-          <input type="number" name="exp6" required><br><br>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Regular:</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm">Rp</span>
+                <input 
+                  type="text" 
+                  name="regular" 
+                  required 
+                  placeholder="0"
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  oninput="formatRupiahInput(this)">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Exp 2 Hari:</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm">Rp</span>
+                <input 
+                  type="text" 
+                  name="exp2" 
+                  required 
+                  placeholder="0"
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  oninput="formatRupiahInput(this)">
+              </div>
+            </div>
+          </div>
 
-          <button type="submit" class="btn btn-primary">Simpan</button>
-          <button type="button" class="btn btn-secondary" onclick="closeAddServiceModal()">Batal</button>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Exp 1 Hari:</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm">Rp</span>
+                <input 
+                  type="text" 
+                  name="exp1" 
+                  required 
+                  placeholder="0"
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  oninput="formatRupiahInput(this)">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Exp 6 Jam:</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm">Rp</span>
+                <input 
+                  type="text" 
+                  name="exp6" 
+                  required 
+                  placeholder="0"
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  oninput="formatRupiahInput(this)">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex space-x-3 pt-4">
+            <button 
+              type="submit" 
+              class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium">
+              Simpan
+            </button>
+            <button 
+              type="button" 
+              onclick="closeAddServiceModal()" 
+              class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium">
+              Batal
+            </button>
+          </div>
         </form>
       </div>
     </div>
 
     <!-- FILTERS -->
-    <div class="filters-section">
-      <div class="filters-grid">
-        <div class="form-group">
-          <label class="form-label">Cabang</label>
-          <select id="filterCabang" class="form-select" onchange="applyFilters()">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Cabang</label>
+          <select 
+            id="filterCabang" 
+            onchange="applyFilters()" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="">Semua Cabang</option>
             <option value="Cabang 1">Cabang 1</option>
             <option value="Cabang 2">Cabang 2</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select id="filterStatus" class="form-select" onchange="applyFilters()">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select 
+            id="filterStatus" 
+            onchange="applyFilters()" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="">Semua Status</option>
             <option value="progress">On Progress</option>
             <option value="finished">Finished</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Periode</label>
-          <select id="filterPeriod" class="form-select" onchange="applyFilters()">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Periode</label>
+          <select 
+            id="filterPeriod" 
+            onchange="applyFilters()" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="all">Semua Data</option>
             <option value="today">Hari Ini</option>
             <option value="7days">7 Hari Terakhir</option>
@@ -150,72 +255,159 @@
             <option value="thisMonth">Bulan Ini</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">&nbsp;</label>
-          <button class="btn btn-secondary" onclick="resetFilters()">
-            <i class="fas fa-undo"></i> Reset Filter
+        <div>
+          <button 
+            onclick="resetFilters()" 
+            class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium">
+            <i class="fas fa-undo"></i>
+            <span>Reset Filter</span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- ACTIONS -->
-    <div class="actions-bar">
-      <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Cari berdasarkan nota, pelanggan..." onkeyup="performSearch()" />
-        <i class="fas fa-search search-icon"></i>
+    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
+      <div class="relative flex-1 max-w-md">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Cari berdasarkan nota, pelanggan..." 
+          onkeyup="performSearch()" 
+          class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
       </div>
-      <div class="actions-buttons">
-        <button class="btn btn-primary" onclick="exportExcel()">
-          <i class="fas fa-file-excel"></i> Export Excel
-        </button>
-      </div>
+      <button 
+        onclick="exportExcel()" 
+        class="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium">
+        <i class="fas fa-file-excel"></i>
+        <span>Export Excel</span>
+      </button>
     </div>
 
     <!-- DATA PANEL -->
-    <div class="panel">
-      <div class="panel-header">
-        <h2 class="panel-title">Data Laundry</h2>
-        <span id="dataCount">Total: 0 data</span>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-900">Data Laundry</h2>
+        <span id="dataCount" class="text-gray-600 text-sm font-medium">Total: 0 data</span>
       </div>
-      <div class="table-container">
-        <table>
-          <thead>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[1300px] border-collapse">
+          <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th>No. Nota</th>
-              <th>Pelanggan</th>
-              <th>Cabang</th>
-              <th>Status</th>
-              <th>Tgl Terima</th>
-              <th>Tgl Selesai</th>
-              <th>Jenis</th>
-              <th>Kg</th>
-              <th>Tgl Ambil</th>
-              <th>Tgl Bayar</th>
-              <th>Pembayaran</th>
-              <th>Harga</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[140px]">No. Nota</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[120px]">Pelanggan</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[100px]">Cabang</th>
+              <th class="text-center py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[90px]">Status</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[100px]">Tgl Terima</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[100px]">Tgl Selesai</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[140px]">Nama Layanan</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[120px]">Jenis Service</th>
+              <th class="text-center py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[60px]">Kg</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[100px]">Tgl Ambil</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[100px]">Tgl Bayar</th>
+              <th class="text-center py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[100px]">Pembayaran</th>
+              <th class="text-right py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[120px]">Harga</th>
             </tr>
           </thead>
           <tbody id="dataTable">
             <tr>
-              <td colspan="13" class="empty-state">Tidak ada data untuk ditampilkan</td>
+              <td colspan="13" class="text-center py-16 text-gray-500 italic">Tidak ada data untuk ditampilkan</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="pagination-container">
-        <div class="pagination-info">
-          <span id="paginationInfo">Menampilkan 0 dari 0 data</span>
-        </div>
-        <div class="pagination" id="pagination"></div>
+      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <span id="paginationInfo" class="text-gray-600 text-sm font-medium">Menampilkan 0 dari 0 data</span>
+        <div id="pagination" class="flex items-center space-x-1"></div>
       </div>
     </div>
   </div>
 
-  <!-- SCRIPT -->
-   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="js/admin.js"></script>
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    // Format Rupiah input function
+    function formatRupiahInput(input) {
+      let value = input.value.replace(/[^\d]/g, '');
+      if (value) {
+        value = parseInt(value).toLocaleString('id-ID');
+      }
+      input.value = value;
+    }
 
+    // Convert formatted rupiah back to number
+    function parseRupiahValue(formattedValue) {
+      return parseInt(formattedValue.replace(/[^\d]/g, '')) || 0;
+    }
+
+    // Override form submission to handle formatted values
+    document.addEventListener('DOMContentLoaded', function() {
+      const addServiceForm = document.getElementById('addServiceForm');
+      if (addServiceForm) {
+        addServiceForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(e.target);
+          const serviceData = {
+            service_name: formData.get('service_name'),
+            regular: parseRupiahValue(formData.get('regular')),
+            exp2: parseRupiahValue(formData.get('exp2')),
+            exp1: parseRupiahValue(formData.get('exp1')),
+            exp6: parseRupiahValue(formData.get('exp6'))
+          };
+          
+          try {
+            const response = await fetch('backend/save_service.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(serviceData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              alert('Layanan berhasil ditambahkan!');
+              closeAddServiceModal();
+              if (typeof loadServicePricing === 'function') {
+                loadServicePricing();
+              }
+            } else {
+              alert('Gagal menambahkan layanan: ' + result.message);
+            }
+          } catch (error) {
+            console.error('Error adding service:', error);
+            alert('Terjadi kesalahan saat menambahkan layanan');
+          }
+        });
+      }
+    });
+
+    // Modal functions
+    function openAddServiceModal() {
+      document.getElementById('addServiceModal').classList.remove('hidden');
+    }
+
+    function closeAddServiceModal() {
+      document.getElementById('addServiceModal').classList.add('hidden');
+      document.getElementById('addServiceForm').reset();
+    }
+
+    // Toggle pricing table
+    function togglePricingTable() {
+      const container = document.getElementById('pricingTableContainer');
+      const toggleIcon = document.getElementById('pricingToggle');
+      
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-up text-white"></i>';
+      } else {
+        container.classList.add('hidden');
+        toggleIcon.innerHTML = '<i class="fas fa-chevron-down text-white"></i>';
+      }
+    }
+  </script>
+  <script src="js/admin.js"></script>
 </body>
 </html>
