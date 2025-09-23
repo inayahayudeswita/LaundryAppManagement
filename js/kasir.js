@@ -27,47 +27,114 @@ function initializeUser() {
     }
 }
 
-// Auto Number Generation System - Updated Format: LRK-PWK-YYMMDD-XXX
-function generateAutoNumber(date = new Date()) {
-    const dateStr = formatDateForNumber(date);
-    const key = `autoNumber_${CABANG}_${dateStr}`;
-    
-    let currentNumber = parseInt(localStorage.getItem(key) || '0');
-    currentNumber++;
-    localStorage.setItem(key, currentNumber.toString());
-    
-    // New format: LRK-PWK-YYMMDD-XXX
-    return `LRK-PWK-${dateStr}-${currentNumber.toString().padStart(3, '0')}`;
-}
-
+// Format tanggal YYMMDD
 function formatDateForNumber(date) {
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}${month}${day}`;
+    const yy = String(date.getFullYear()).slice(-2);
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yy}${mm}${dd}`;
 }
 
-function generateUID() {
-    const now = new Date();
-    const dateStr = formatDateForNumber(now);
-    const timeStr = now.getHours().toString().padStart(2, '0') + 
-                   now.getMinutes().toString().padStart(2, '0');
-    const randomStr = Math.random().toString(36).substr(2, 3).toUpperCase();
+// Fungsi untuk generate nomor nota yang sebenarnya (hanya dipanggil saat simpan)
+function generateActualNumber() {
+    const dateStr = formatDateForNumber(new Date());
+    const key = `autoNumber_${CABANG}_${dateStr}`;
+    let currentNumber = parseInt(localStorage.getItem(key) || "0") + 1;
+    return `LRK-PWK-${dateStr}-${currentNumber.toString().padStart(3, "0")}`;
+}
+
+// Fungsi untuk generate preview nomor (tanpa menaikkan counter)
+function generatePreviewNumber() {
+    const dateStr = formatDateForNumber(new Date());
+    const key = `autoNumber_${CABANG}_${dateStr}`;
+    let currentNumber = parseInt(localStorage.getItem(key) || "0");
     
-    return `${CABANG.replace(/\s/g, '').slice(0, 3).toUpperCase()}-${dateStr}-${timeStr}-${randomStr}`;
+    // Hanya preview: angka saat ini + 1 (hanya untuk display)
+    const previewNumber = currentNumber + 1;
+    return `LRK-PWK-${dateStr}-${previewNumber.toString().padStart(3, "0")}`;
 }
 
-async function saveOrderToDB(data) {
+// 🔹 Saat simpan berhasil, baru increment counter
+async function saveData() {
     try {
-        const res = await fetch("backend/save_order.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
+        const modal = document.getElementById('formModal');
+        const uidEdit = modal?.dataset?.uid || null;
+        
+        // 🔹 GENERATE NOMOR NOTA YANG SESUNGGUHNYA HANYA JIKA TAMBAH DATA BARU
+        let nomorNota;
+        if (!uidEdit) {
+            // TAMBAH DATA BARU: generate nomor nota yang sebenarnya
+            nomorNota = generateActualNumber();
+        } else {
+            // EDIT DATA: gunakan nomor nota yang sudah ada
+            nomorNota = document.getElementById('nomorNota').value || '';
+        }
+
+        const namaPelanggan = document.getElementById('namaPelanggan').value?.trim();
+        const tanggalTerima = document.getElementById('tanggalTerima').value;
+        const tanggalSelesai = document.getElementById('tanggalSelesai').value;
+        const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
+        const categorySelect = document.getElementById('jenisLaundry');
+        const categoryId = parseInt(categorySelect?.value || 0);
+        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || getCategoryNameById(serviceId, categoryId);
+        const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
+        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
+        const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
+        const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
+
+        if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
+            alert('Lengkapi semua field yang wajib diisi!');
+            return;
+        }
+
+        const payload = {
+            uid: uidEdit || generateUID(),
+            nomorNota,
+            namaPelanggan,
+            tanggalTerima,
+            tanggalSelesai,
+            serviceId,
+            categoryId,
+            serviceName: getServiceNameById(serviceId),
+            categoryName,
+            pricePerKg,
+            jumlahKg,
+            harga,
+            payment: metodePembayaran,
+            status: 'progress',
+            cabang: document.getElementById('currentBranch')?.textContent || null
+        };
+
+        const endpoint = uidEdit ? 'backend/update_order.php' : 'backend/save_order.php';
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-        return await res.json();
-    } catch (error) {
-        console.error("Gagal simpan order:", error);
-        return { success: false, message: "Gagal terhubung ke server" };
+
+        const resp = await res.json();
+        
+        if (resp.success) {
+            if (!uidEdit) { 
+                // ✅ INCREMENT COUNTER HANYA JIKA SIMPAN DATA BARU BERHASIL
+                const dateStr = formatDateForNumber(new Date());
+                const key = `autoNumber_${CABANG}_${dateStr}`;
+                let currentNumber = parseInt(localStorage.getItem(key) || "0");
+                localStorage.setItem(key, (currentNumber + 1).toString());
+                
+                console.log(`Counter dinaikkan: ${currentNumber} → ${currentNumber + 1}`);
+            }
+
+            alert(uidEdit ? 'Order berhasil diupdate!' : 'Order berhasil disimpan!');
+            hideForm();
+            await loadOrders();
+        } else {
+            alert("Gagal simpan order: " + resp.message);
+        }
+
+    } catch (err) {
+        console.error('Error saveData:', err);
+        alert('Terjadi kesalahan saat menyimpan order: ' + (err.message || err));
     }
 }
 
@@ -219,6 +286,10 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('id-ID');
 }
 
+function generateUID() {
+    return 'uid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 // Receipt Generation
 function generateReceipt(data) {
     const now = new Date();
@@ -350,161 +421,8 @@ function syncDataToAdmin() {
     }
 }
 
-// Initialize App
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadServices(); // Load services first
-    initializeUser();
-    await loadOrders();
-
-    // Set default tanggal hari ini
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('tanggalTerima').value = today;
-
-    if (document.getElementById('finishTanggalAmbil')) {
-        document.getElementById('finishTanggalAmbil').value = today;
-    }
-    if (document.getElementById('finishTanggalBayar')) {
-        document.getElementById('finishTanggalBayar').value = today;
-    }
-});
-
-// Tab Management
-function switchTab(tab) {
-    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-    
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(`${tab}-tab`).classList.add('active');
-}
-
-function updateCounts(onProgressCount, finishedCount) {
-    document.getElementById('onProgressCount').textContent = onProgressCount || 0;
-    document.getElementById('finishedCount').textContent = finishedCount || 0;
-}
-
-// Payment Management
-function selectPayment(method, context) {
-    if (context === 'form') {
-        const formOptions = document.querySelectorAll('#formModal .payment-option');
-        const formRadios = document.querySelectorAll('input[name="formPayment"]');
-        
-        formOptions.forEach(option => option.classList.remove('selected'));
-        formRadios.forEach(radio => radio.checked = false);
-        
-        const selectedRadio = document.querySelector(`input[name="formPayment"][value="${method}"]`);
-        if (selectedRadio) {
-            selectedRadio.checked = true;
-            selectedRadio.closest('.payment-option').classList.add('selected');
-        }
-    } else if (context === 'finish') {
-        const finishOptions = document.querySelectorAll('#finishModal .payment-option');
-        const finishRadios = document.querySelectorAll('input[name="payment"]');
-        
-        finishOptions.forEach(option => option.classList.remove('selected'));
-        finishRadios.forEach(radio => radio.checked = false);
-        
-        const selectedRadio = document.querySelector(`input[name="payment"][value="${method}"]`);
-        if (selectedRadio) {
-            selectedRadio.checked = true;
-            selectedRadio.closest('.payment-option').classList.add('selected');
-        }
-    }
-}
-
 // ===============================
-// TABLE RENDERING - UPDATED WITHOUT UID
-// ===============================
-function renderOnProgressTable(data) {
-    const tbody = document.getElementById('onProgressTable');
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data on progress</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = data.map((item) => {
-        let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
-        if (item.payment && item.payment !== 'none') {
-            paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
-        }
-
-        // Get service and category names
-        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
-        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
-
-        return `
-            <tr>
-                <td><span class="nota-code">${item.nomorNota}</span></td>
-                <td>${item.namaPelanggan}</td>
-                <td>${formatDate(item.tanggalTerima)}</td>
-                <td>${formatDate(item.tanggalSelesai)}</td>
-                <td><span class="service-badge">${serviceName}</span></td>
-                <td><span class="jenis-badge">${categoryName}</span></td>
-                <td>${item.jumlahKg} kg</td>
-                <td><span class="currency">${formatRupiah(item.harga)}</span></td>
-                <td>${paymentDisplay}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak Struk">
-                            <i class="fas fa-print"></i>
-                        </button>
-                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit Data">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon finish" 
-                                onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
-                                title="Selesaikan">
-                            <i class="fas fa-check"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function renderFinishedTable(orders) {
-    const tbody = document.getElementById('finishedTable');
-    if (!orders || orders.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = orders.map((item) => {
-        // Get service and category names
-        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
-        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
-
-        return `
-            <tr>
-                <td><span class="nota-code">${item.nomorNota}</span></td>
-                <td>${item.namaPelanggan}</td>
-                <td>${formatDate(item.tanggalTerima)}</td>
-                <td>${formatDate(item.tanggalSelesai)}</td>
-                <td><span class="service-badge">${serviceName}</span></td>
-                <td><span class="jenis-badge">${categoryName}</span></td>
-                <td>${item.jumlahKg} kg</td>
-                <td>${formatDate(item.tanggalAmbil)}</td>
-                <td>${formatDate(item.tanggalBayar)}</td>
-                <td><span class="jenis-badge">${item.payment ? item.payment.toUpperCase() : "-"}</span></td>
-                <td><span class="currency">${formatRupiah(item.harga)}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-icon print" onclick='printFinishedOrder(${JSON.stringify(item)})' title="Cetak Struk">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-function printFinishedOrder(order) {
-    showReceiptModal(order);
-}
-
-// ===============================
-// FORM MANAGEMENT - UPDATED
+// FORM MANAGEMENT - DIPERBAIKI
 // ===============================
 function showForm() {
     const modal = document.getElementById('formModal');
@@ -514,6 +432,11 @@ function showForm() {
     document.getElementById('saveButtonText').textContent = "Simpan";
     
     clearForm();
+    
+    // 🔹 HANYA TAMPILKAN PREVIEW NOMOR TANPA MENAIKKAN COUNTER
+    const previewNumber = generatePreviewNumber();
+    document.getElementById('nomorNota').value = previewNumber;
+    
     modal.classList.add('show');
 }
 
@@ -522,7 +445,8 @@ function hideForm() {
 }
 
 function clearForm() {
-    document.getElementById('nomorNota').value = generateAutoNumber();
+    // 🔹 Biarkan nomor nota kosong, akan diisi oleh showForm() dengan preview
+    document.getElementById('nomorNota').value = '';
     document.getElementById('namaPelanggan').value = '';
     document.getElementById('tanggalTerima').value = new Date().toISOString().split('T')[0];
     document.getElementById('tanggalSelesai').value = '';
@@ -547,82 +471,7 @@ function clearForm() {
 }
 
 // ===============================
-// SAVE DATA - UPDATED
-// ===============================
-async function saveData() {
-    try {
-        const modal = document.getElementById('formModal');
-        const uidEdit = modal?.dataset?.uid || null;
-        const uid = uidEdit || generateUID();
-
-        const nomorNota = document.getElementById('nomorNota').value || generateAutoNumber();
-        const namaPelanggan = document.getElementById('namaPelanggan').value?.trim();
-        const tanggalTerima = document.getElementById('tanggalTerima').value;
-        const tanggalSelesai = document.getElementById('tanggalSelesai').value;
-        const serviceId = parseInt(document.getElementById('serviceName').value) || 0;
-        const categorySelect = document.getElementById('jenisLaundry');
-        const categoryId = parseInt(categorySelect?.value || 0);
-        const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || getCategoryNameById(serviceId, categoryId);
-        const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
-        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
-        const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
-        const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
-
-        // Validasi
-        if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
-            alert('Lengkapi semua field yang wajib diisi!');
-            return;
-        }
-
-        const payload = {
-            uid,
-            nomorNota,
-            namaPelanggan,
-            tanggalTerima,
-            tanggalSelesai,
-            serviceId,
-            categoryId,
-            serviceName: getServiceNameById(serviceId),
-            categoryName,
-            pricePerKg,
-            jumlahKg,
-            harga,
-            payment: metodePembayaran,
-            status: 'progress',
-            cabang: document.getElementById('currentBranch')?.textContent || null
-        };
-
-        console.log('Saving order: ', payload);
-
-        const endpoint = uidEdit ? 'backend/update_order.php' : 'backend/save_order.php';
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const resp = await res.json();
-        if (resp.success) {
-            alert(uidEdit ? 'Order berhasil diupdate!' : 'Order berhasil disimpan!');
-            // clear edit state
-            editingUid = null;
-            if (modal) modal.dataset.uid = '';
-            hideForm();
-            clearForm();
-            await loadOrders(); // refresh dari DB
-        } else {
-            console.error('Server error:', resp);
-            alert('Gagal simpan order: ' + resp.message);
-        }
-
-    } catch (err) {
-        console.error('Error saveData:', err);
-        alert('Terjadi kesalahan saat menyimpan order: ' + (err.message || err));
-    }
-}
-
-// ===============================
-// EDIT DATA FUNCTION - UPDATED
+// EDIT DATA FUNCTION
 // ===============================
 function editData(uid) {
     editingUid = uid;
@@ -788,6 +637,98 @@ async function confirmFinish() {
 }
 
 // ===============================
+// TABLE RENDERING
+// ===============================
+function renderOnProgressTable(data) {
+    const tbody = document.getElementById('onProgressTable');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Tidak ada data on progress</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map((item) => {
+        let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
+        if (item.payment && item.payment !== 'none') {
+            paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
+        }
+
+        // Get service and category names
+        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
+        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
+
+        return `
+            <tr>
+                <td><span class="nota-code">${item.nomorNota}</span></td>
+                <td>${item.namaPelanggan}</td>
+                <td>${formatDate(item.tanggalTerima)}</td>
+                <td>${formatDate(item.tanggalSelesai)}</td>
+                <td><span class="service-badge">${serviceName}</span></td>
+                <td><span class="jenis-badge">${categoryName}</span></td>
+                <td>${item.jumlahKg} kg</td>
+                <td><span class="currency">${formatRupiah(item.harga)}</span></td>
+                <td>${paymentDisplay}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-icon print" onclick='showReceiptModal(${JSON.stringify(item)})' title="Cetak Struk">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button class="btn-icon edit" onclick="editData('${item.uid}')" title="Edit Data">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon finish" 
+                                onclick="showFinishForm('${item.uid}', '${item.payment || 'none'}')" 
+                                title="Selesaikan">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderFinishedTable(orders) {
+    const tbody = document.getElementById('finishedTable');
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Tidak ada data finished</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = orders.map((item) => {
+        // Get service and category names
+        const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
+        const categoryName = item.categoryName || getCategoryNameById(item.serviceId, item.categoryId) || 'Unknown Category';
+
+        return `
+            <tr>
+                <td><span class="nota-code">${item.nomorNota}</span></td>
+                <td>${item.namaPelanggan}</td>
+                <td>${formatDate(item.tanggalTerima)}</td>
+                <td>${formatDate(item.tanggalSelesai)}</td>
+                <td><span class="service-badge">${serviceName}</span></td>
+                <td><span class="jenis-badge">${categoryName}</span></td>
+                <td>${item.jumlahKg} kg</td>
+                <td>${formatDate(item.tanggalAmbil)}</td>
+                <td>${formatDate(item.tanggalBayar)}</td>
+                <td><span class="jenis-badge">${item.payment ? item.payment.toUpperCase() : "-"}</span></td>
+                <td><span class="currency">${formatRupiah(item.harga)}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-icon print" onclick='printFinishedOrder(${JSON.stringify(item)})' title="Cetak Struk">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function printFinishedOrder(order) {
+    showReceiptModal(order);
+}
+
+// ===============================
 // SEARCH FUNCTIONS
 // ===============================
 function performSearch(type) {
@@ -829,6 +770,50 @@ function performSearch(type) {
 }
 
 // ===============================
+// TAB MANAGEMENT & UTILITIES
+// ===============================
+function switchTab(tab) {
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tab}-tab`).classList.add('active');
+}
+
+function updateCounts(onProgressCount, finishedCount) {
+    document.getElementById('onProgressCount').textContent = onProgressCount || 0;
+    document.getElementById('finishedCount').textContent = finishedCount || 0;
+}
+
+function selectPayment(method, context) {
+    if (context === 'form') {
+        const formOptions = document.querySelectorAll('#formModal .payment-option');
+        const formRadios = document.querySelectorAll('input[name="formPayment"]');
+        
+        formOptions.forEach(option => option.classList.remove('selected'));
+        formRadios.forEach(radio => radio.checked = false);
+        
+        const selectedRadio = document.querySelector(`input[name="formPayment"][value="${method}"]`);
+        if (selectedRadio) {
+            selectedRadio.checked = true;
+            selectedRadio.closest('.payment-option').classList.add('selected');
+        }
+    } else if (context === 'finish') {
+        const finishOptions = document.querySelectorAll('#finishModal .payment-option');
+        const finishRadios = document.querySelectorAll('input[name="payment"]');
+        
+        finishOptions.forEach(option => option.classList.remove('selected'));
+        finishRadios.forEach(radio => radio.checked = false);
+        
+        const selectedRadio = document.querySelector(`input[name="payment"][value="${method}"]`);
+        if (selectedRadio) {
+            selectedRadio.checked = true;
+            selectedRadio.closest('.payment-option').classList.add('selected');
+        }
+    }
+}
+
+// ===============================
 // AUTO SYNC & STORAGE LISTENERS
 // ===============================
 setInterval(function() {
@@ -839,5 +824,23 @@ window.addEventListener('storage', function(e) {
     if (e.key && (e.key.startsWith('onProgressData_') || e.key.startsWith('finishedData_'))) {
         console.log('Storage changed, syncing data to admin...');
         syncDataToAdmin();
+    }
+});
+
+// Initialize App
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadServices(); // Load services first
+    initializeUser();
+    await loadOrders();
+
+    // Set default tanggal hari ini
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('tanggalTerima').value = today;
+
+    if (document.getElementById('finishTanggalAmbil')) {
+        document.getElementById('finishTanggalAmbil').value = today;
+    }
+    if (document.getElementById('finishTanggalBayar')) {
+        document.getElementById('finishTanggalBayar').value = today;
     }
 });
