@@ -1,0 +1,497 @@
+[24-Sep-2025 19:19:37 Europe/Berlin] Raw Input: {"uid":"uid_1758734377190_rt24a83ky","nomorNota":"LRK-PWK-250925-003","namaPelanggan":"sass","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":2,"serviceName":"cuci lipat","categoryName":"Exp 2 Hari","pricePerKg":6000,"jumlahKg":1.5,"harga":9000,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 19:19:37 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758734377190_rt24a83ky
+    [nomorNota] => LRK-PWK-250925-003
+    [namaPelanggan] => sass
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 2
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 2 Hari
+    [pricePerKg] => 6000
+    [jumlahKg] => 1.5
+    [harga] => 9000
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 19:19:37 Europe/Berlin] jumlahKg value: 1.5 (type: double)
+[24-Sep-2025 19:19:37 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 19:19:37 Europe/Berlin] INSERT values: uid=uid_1758734377190_rt24a83ky, jumlahKg=1.5
+[24-Sep-2025 19:19:37 Europe/Berlin] INSERT successful for UID: uid_1758734377190_rt24a83ky
+[24-Sep-2025 19:28:45 Europe/Berlin] Raw Input: {"uid":"uid_1758734925865_8aq0w1zr1","nomorNota":"LRK-PWK-250925-004","namaPelanggan":"2wewq","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":22.22,"harga":111100,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 19:28:45 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758734925865_8aq0w1zr1
+    [nomorNota] => LRK-PWK-250925-004
+    [namaPelanggan] => 2wewq
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 22.22
+    [harga] => 111100
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 19:28:45 Europe/Berlin] jumlahKg value: 22.22 (type: double)
+[24-Sep-2025 19:28:45 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 19:28:45 Europe/Berlin] INSERT values: uid=uid_1758734925865_8aq0w1zr1, jumlahKg=22.22
+[24-Sep-2025 19:28:45 Europe/Berlin] INSERT successful for UID: uid_1758734925865_8aq0w1zr1
+[24-Sep-2025 19:29:52 Europe/Berlin] Raw Input: {"uid":"uid_1758734992304_e3nerwnid","nomorNota":"LRK-PWK-250925-005","namaPelanggan":"mm22","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":2,"serviceName":"cuci lipat","categoryName":"Exp 2 Hari","pricePerKg":6000,"jumlahKg":2.5,"harga":15000,"payment":"cash","tanggalBayar":"2025-09-24","status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 19:29:52 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758734992304_e3nerwnid
+    [nomorNota] => LRK-PWK-250925-005
+    [namaPelanggan] => mm22
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 2
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 2 Hari
+    [pricePerKg] => 6000
+    [jumlahKg] => 2.5
+    [harga] => 15000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-24
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 19:29:52 Europe/Berlin] jumlahKg value: 2.5 (type: double)
+[24-Sep-2025 19:29:52 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 19:29:52 Europe/Berlin] INSERT values: uid=uid_1758734992304_e3nerwnid, jumlahKg=2.5
+[24-Sep-2025 19:29:52 Europe/Berlin] INSERT successful for UID: uid_1758734992304_e3nerwnid
+[24-Sep-2025 19:49:41 Europe/Berlin] Raw Input: {"uid":"uid_1758736181524_3q9j5rjmv","nomorNota":"LRK-PWK-250925-006","namaPelanggan":"ssasasa","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":2.5,"harga":12500,"payment":"cash","tanggalBayar":"2025-09-24","status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 19:49:41 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758736181524_3q9j5rjmv
+    [nomorNota] => LRK-PWK-250925-006
+    [namaPelanggan] => ssasasa
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 2.5
+    [harga] => 12500
+    [payment] => cash
+    [tanggalBayar] => 2025-09-24
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 19:49:41 Europe/Berlin] 🔍 jumlahKg DEBUG: raw=2.5, converted=2.5, type=double
+[24-Sep-2025 19:49:41 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 19:49:41 Europe/Berlin] INSERT jumlahKg value: 2.5 (type: double)
+[24-Sep-2025 19:49:41 Europe/Berlin] INSERT successful for UID: uid_1758736181524_3q9j5rjmv, jumlahKg saved: 2.5
+[24-Sep-2025 20:30:53 Europe/Berlin] Raw Input: {"uid":"uid_1758738653316_uqyn1lt82","nomorNota":"LRK-PWK-250925-007","namaPelanggan":"hh","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":2,"categoryId":2,"serviceName":"setrika","categoryName":"Exp 2 Hari","pricePerKg":5000,"jumlahKg":1.5,"harga":7500,"payment":"cash","tanggalBayar":"2025-09-24","status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 20:30:53 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758738653316_uqyn1lt82
+    [nomorNota] => LRK-PWK-250925-007
+    [namaPelanggan] => hh
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 2
+    [categoryId] => 2
+    [serviceName] => setrika
+    [categoryName] => Exp 2 Hari
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.5
+    [harga] => 7500
+    [payment] => cash
+    [tanggalBayar] => 2025-09-24
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 20:30:53 Europe/Berlin] 🔍 jumlahKg DEBUG: raw=1.5, converted=1.5, type=double
+[24-Sep-2025 20:30:53 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 20:30:53 Europe/Berlin] INSERT jumlahKg value: 1.5 (type: double)
+[24-Sep-2025 20:30:53 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php:119
+Stack trace:
+#0 C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php(119): mysqli_stmt->bind_param('sssssii d issss', 'uid_17587386533...', 'LRK-PWK-250925-...', 'hh', '2025-09-24', '2025-09-25', 2, 2, 1.5, 7500, 'cash', 'progress', 'cabang munjul', '2025-09-24 20:3...')
+#1 {main}
+  thrown in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php on line 119
+[24-Sep-2025 20:44:08 Europe/Berlin] Raw Input: {"uid":"uid_1758739448420_fn30pdjsu","nomorNota":"LRK-PWK-250925-007","namaPelanggan":"sdakdakd","tanggalTerima":"2025-09-25","tanggalSelesai":"2025-09-26","serviceId":1,"categoryId":2,"serviceName":"cuci lipat","categoryName":"Exp 2 Hari","pricePerKg":6000,"jumlahKg":1.2,"harga":7200,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 20:44:08 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758739448420_fn30pdjsu
+    [nomorNota] => LRK-PWK-250925-007
+    [namaPelanggan] => sdakdakd
+    [tanggalTerima] => 2025-09-25
+    [tanggalSelesai] => 2025-09-26
+    [serviceId] => 1
+    [categoryId] => 2
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 2 Hari
+    [pricePerKg] => 6000
+    [jumlahKg] => 1.2
+    [harga] => 7200
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 20:44:08 Europe/Berlin] 🔍 jumlahKg DEBUG: raw=1.2, converted=1.2, type=double
+[24-Sep-2025 20:44:08 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 20:44:08 Europe/Berlin] INSERT jumlahKg value: 1.2 (type: double)
+[24-Sep-2025 20:44:08 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php:119
+Stack trace:
+#0 C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php(119): mysqli_stmt->bind_param('sssssii dissss', 'uid_17587394484...', 'LRK-PWK-250925-...', 'sdakdakd', '2025-09-25', '2025-09-26', 1, 2, 1.2, 7200, 'none', 'progress', 'cabang munjul', '2025-09-24 20:4...')
+#1 {main}
+  thrown in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php on line 119
+[24-Sep-2025 20:44:59 Europe/Berlin] Raw Input: {"uid":"uid_1758739499706_wt86klw4g","nomorNota":"LRK-PWK-250925-007","namaPelanggan":"k1","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-10-04","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":1.2,"harga":6000,"payment":"cash","tanggalBayar":"2025-09-24","status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 20:44:59 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758739499706_wt86klw4g
+    [nomorNota] => LRK-PWK-250925-007
+    [namaPelanggan] => k1
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-10-04
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.2
+    [harga] => 6000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-24
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 20:44:59 Europe/Berlin] 🔍 jumlahKg DEBUG: raw=1.2, converted=1.2, type=double
+[24-Sep-2025 20:44:59 Europe/Berlin] INSERT SQL: INSERT INTO orders 
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[24-Sep-2025 20:44:59 Europe/Berlin] INSERT jumlahKg value: 1.2 (type: double)
+[24-Sep-2025 20:44:59 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php:119
+Stack trace:
+#0 C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php(119): mysqli_stmt->bind_param('sssssii dissss', 'uid_17587394997...', 'LRK-PWK-250925-...', 'k1', '2025-09-24', '2025-10-04', 1, 1, 1.2, 6000, 'cash', 'progress', 'cabang munjul', '2025-09-24 20:4...')
+#1 {main}
+  thrown in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php on line 119
+[24-Sep-2025 21:01:26 Europe/Berlin] Raw Input: {"uid":"uid_1758740486837_1y4uj7pt0","nomorNota":"LRK-PWK-250925-007","namaPelanggan":"andsja","tanggalTerima":"2025-09-24","tanggalSelesai":"2025-09-25","serviceId":2,"categoryId":1,"serviceName":"setrika","categoryName":"Regular","pricePerKg":4000,"jumlahKg":1.2,"harga":4800,"payment":"cash","tanggalBayar":"2025-09-24","status":"progress","cabang":"cabang munjul"}
+[24-Sep-2025 21:01:26 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758740486837_1y4uj7pt0
+    [nomorNota] => LRK-PWK-250925-007
+    [namaPelanggan] => andsja
+    [tanggalTerima] => 2025-09-24
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 2
+    [categoryId] => 1
+    [serviceName] => setrika
+    [categoryName] => Regular
+    [pricePerKg] => 4000
+    [jumlahKg] => 1.2
+    [harga] => 4800
+    [payment] => cash
+    [tanggalBayar] => 2025-09-24
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[24-Sep-2025 21:01:26 Europe/Berlin] INSERT SQL: INSERT INTO orders
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[25-Sep-2025 17:41:01 Europe/Berlin] Raw Input: {"uid":"uid_1758814861490_dk2itb1v3","nomorNota":"LRK-PWK-250925-008","namaPelanggan":"pyment test","tanggalTerima":"2025-09-25","tanggalSelesai":"2025-09-26","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":1.2,"harga":6000,"payment":"cash","tanggalBayar":"2025-09-25","status":"progress","cabang":"cabang munjul"}
+[25-Sep-2025 17:41:01 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758814861490_dk2itb1v3
+    [nomorNota] => LRK-PWK-250925-008
+    [namaPelanggan] => pyment test
+    [tanggalTerima] => 2025-09-25
+    [tanggalSelesai] => 2025-09-26
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.2
+    [harga] => 6000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-25
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[25-Sep-2025 17:41:01 Europe/Berlin] INSERT SQL: INSERT INTO orders
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                 service_id, category_id, jumlahKg, harga,
+                 payment, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[25-Sep-2025 17:51:07 Europe/Berlin] Raw Input: {"uid":"uid_1758815467418_djf9xy4ju","nomorNota":"LRK-PWK-250925-009","namaPelanggan":"test payment 2","tanggalTerima":"2025-09-25","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":1.5,"harga":7500,"payment":"cash","tanggalBayar":"2025-09-25","status":"progress","cabang":"cabang munjul"}
+[25-Sep-2025 17:51:07 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758815467418_djf9xy4ju
+    [nomorNota] => LRK-PWK-250925-009
+    [namaPelanggan] => test payment 2
+    [tanggalTerima] => 2025-09-25
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.5
+    [harga] => 7500
+    [payment] => cash
+    [tanggalBayar] => 2025-09-25
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[25-Sep-2025 17:51:07 Europe/Berlin] INSERT SQL: INSERT INTO orders
+            (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+            service_id, category_id, jumlahKg, harga,
+            payment, status, cabang, createdAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[25-Sep-2025 17:51:07 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of variables must match the number of parameters in the prepared statement in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php:111
+Stack trace:
+#0 C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php(111): mysqli_stmt->bind_param('sssssiidisssss', 'uid_17588154674...', 'LRK-PWK-250925-...', 'test payment 2', '2025-09-25', '2025-09-25', 1, 1, 1.5, 7500, 'cash', '2025-09-25', 'progress', 'cabang munjul', '2025-09-25 17:5...')
+#1 {main}
+  thrown in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php on line 111
+[25-Sep-2025 17:55:26 Europe/Berlin] Raw Input: {"uid":"uid_1758815726184_9k8z9cyv6","nomorNota":"LRK-PWK-250925-009","namaPelanggan":"test payment 2","tanggalTerima":"2025-09-25","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":1.5,"harga":7500,"payment":"cash","tanggalBayar":"2025-09-25","status":"progress","cabang":"cabang munjul"}
+[25-Sep-2025 17:55:26 Europe/Berlin] Parsed Data: Array
+(
+    [uid] => uid_1758815726184_9k8z9cyv6
+    [nomorNota] => LRK-PWK-250925-009
+    [namaPelanggan] => test payment 2
+    [tanggalTerima] => 2025-09-25
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.5
+    [harga] => 7500
+    [payment] => cash
+    [tanggalBayar] => 2025-09-25
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[25-Sep-2025 17:55:26 Europe/Berlin] INSERT SQL: INSERT INTO orders
+                (uid, nomorNota, namaPelanggan, tanggalTerima, tanggalSelesai,
+                service_id, category_id, jumlahKg, harga,
+                payment, tanggalBayar, status, cabang, createdAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+[25-Sep-2025 17:55:26 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php:111
+Stack trace:
+#0 C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php(111): mysqli_stmt->bind_param('sssssii d i sss...', 'uid_17588157261...', 'LRK-PWK-250925-...', 'test payment 2', '2025-09-25', '2025-09-25', 1, 1, 1.5, 7500, 'cash', '2025-09-25', 'progress', 'cabang munjul', '2025-09-25 17:5...')
+#1 {main}
+  thrown in C:\xampp\htdocs\laundry\LaundryAppManagement\backend\save_order.php on line 111
+[25-Sep-2025 18:03:39 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758816219647_lfu4plkek","nomorNota":"LRK-PWK-250925-009","namaPelanggan":"payment test 2","tanggalTerima":"2025-09-25","tanggalSelesai":"2025-09-25","serviceId":1,"categoryId":4,"serviceName":"cuci lipat","categoryName":"Exp 6 Jam","pricePerKg":8000,"jumlahKg":1.5,"harga":12000,"payment":"cash","tanggalBayar":"2025-09-25","status":"progress","cabang":"cabang munjul"}
+[25-Sep-2025 18:03:39 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758816219647_lfu4plkek
+    [nomorNota] => LRK-PWK-250925-009
+    [namaPelanggan] => payment test 2
+    [tanggalTerima] => 2025-09-25
+    [tanggalSelesai] => 2025-09-25
+    [serviceId] => 1
+    [categoryId] => 4
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 6 Jam
+    [pricePerKg] => 8000
+    [jumlahKg] => 1.5
+    [harga] => 12000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-25
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[26-Sep-2025 20:03:03 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758909783922_udiget66v","nomorNota":"LRK-PWK-250927-001","namaPelanggan":"test excel1","tanggalTerima":"2025-09-26","tanggalSelesai":"2025-09-28","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":5000,"jumlahKg":1.2,"harga":6000,"payment":"cash","tanggalBayar":"2025-09-26","status":"progress","cabang":"cabang munjul"}
+[26-Sep-2025 20:03:03 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758909783922_udiget66v
+    [nomorNota] => LRK-PWK-250927-001
+    [namaPelanggan] => test excel1
+    [tanggalTerima] => 2025-09-26
+    [tanggalSelesai] => 2025-09-28
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 5000
+    [jumlahKg] => 1.2
+    [harga] => 6000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-26
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[26-Sep-2025 20:05:46 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758909946670_64z9125fc","nomorNota":"LRK-PWK-250927-002","namaPelanggan":"test excel 2","tanggalTerima":"2025-09-26","tanggalSelesai":"2025-09-27","serviceId":1,"categoryId":2,"serviceName":"cuci lipat","categoryName":"Exp 2 Hari","pricePerKg":6000,"jumlahKg":2.2,"harga":13200,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[26-Sep-2025 20:05:46 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758909946670_64z9125fc
+    [nomorNota] => LRK-PWK-250927-002
+    [namaPelanggan] => test excel 2
+    [tanggalTerima] => 2025-09-26
+    [tanggalSelesai] => 2025-09-27
+    [serviceId] => 1
+    [categoryId] => 2
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 2 Hari
+    [pricePerKg] => 6000
+    [jumlahKg] => 2.2
+    [harga] => 13200
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[26-Sep-2025 20:21:19 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758910879857_w200ih0lx","nomorNota":"LRK-PWK-250927-003","namaPelanggan":"test excel 3","tanggalTerima":"2025-09-26","tanggalSelesai":"2025-09-28","serviceId":1,"categoryId":4,"serviceName":"cuci lipat","categoryName":"Exp 6 Jam","pricePerKg":8000,"jumlahKg":1.7,"harga":13600,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[26-Sep-2025 20:21:19 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758910879857_w200ih0lx
+    [nomorNota] => LRK-PWK-250927-003
+    [namaPelanggan] => test excel 3
+    [tanggalTerima] => 2025-09-26
+    [tanggalSelesai] => 2025-09-28
+    [serviceId] => 1
+    [categoryId] => 4
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 6 Jam
+    [pricePerKg] => 8000
+    [jumlahKg] => 1.7
+    [harga] => 13600
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[26-Sep-2025 20:22:04 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758910924460_xj3yvid09","nomorNota":"LRK-PWK-250927-004","namaPelanggan":"test excel 4","tanggalTerima":"2025-09-26","tanggalSelesai":"2025-09-27","serviceId":1,"categoryId":4,"serviceName":"cuci lipat","categoryName":"Exp 6 Jam","pricePerKg":8000,"jumlahKg":2.2,"harga":17600,"payment":"transfer","tanggalBayar":"2025-09-26","status":"progress","cabang":"cabang munjul"}
+[26-Sep-2025 20:22:04 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758910924460_xj3yvid09
+    [nomorNota] => LRK-PWK-250927-004
+    [namaPelanggan] => test excel 4
+    [tanggalTerima] => 2025-09-26
+    [tanggalSelesai] => 2025-09-27
+    [serviceId] => 1
+    [categoryId] => 4
+    [serviceName] => cuci lipat
+    [categoryName] => Exp 6 Jam
+    [pricePerKg] => 8000
+    [jumlahKg] => 2.2
+    [harga] => 17600
+    [payment] => transfer
+    [tanggalBayar] => 2025-09-26
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[26-Sep-2025 20:22:40 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758910960069_yrgupaa3s","nomorNota":"LRK-PWK-250927-005","namaPelanggan":"test excel 5","tanggalTerima":"2025-09-26","tanggalSelesai":"2025-09-27","serviceId":3,"categoryId":4,"serviceName":"cuci","categoryName":"Exp 6 Jam","pricePerKg":7500,"jumlahKg":3,"harga":22500,"payment":"qris","tanggalBayar":"2025-09-26","status":"progress","cabang":"cabang munjul"}
+[26-Sep-2025 20:22:40 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758910960069_yrgupaa3s
+    [nomorNota] => LRK-PWK-250927-005
+    [namaPelanggan] => test excel 5
+    [tanggalTerima] => 2025-09-26
+    [tanggalSelesai] => 2025-09-27
+    [serviceId] => 3
+    [categoryId] => 4
+    [serviceName] => cuci
+    [categoryName] => Exp 6 Jam
+    [pricePerKg] => 7500
+    [jumlahKg] => 3
+    [harga] => 22500
+    [payment] => qris
+    [tanggalBayar] => 2025-09-26
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[27-Sep-2025 20:42:55 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1758998575072_zeg1bx0m3","nomorNota":"LRK-PWK-250928-001","namaPelanggan":"test eror","tanggalTerima":"2025-09-27","tanggalSelesai":"2025-09-28","serviceId":2,"categoryId":4,"serviceName":"setrika","categoryName":"Exp 6 Jam","pricePerKg":7000,"jumlahKg":1,"harga":7000,"payment":"cash","tanggalBayar":"2025-09-27","status":"progress","cabang":"cabang munjul"}
+[27-Sep-2025 20:42:55 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1758998575072_zeg1bx0m3
+    [nomorNota] => LRK-PWK-250928-001
+    [namaPelanggan] => test eror
+    [tanggalTerima] => 2025-09-27
+    [tanggalSelesai] => 2025-09-28
+    [serviceId] => 2
+    [categoryId] => 4
+    [serviceName] => setrika
+    [categoryName] => Exp 6 Jam
+    [pricePerKg] => 7000
+    [jumlahKg] => 1
+    [harga] => 7000
+    [payment] => cash
+    [tanggalBayar] => 2025-09-27
+    [status] => progress
+    [cabang] => cabang munjul
+)
+
+[28-Sep-2025 15:16:01 Europe/Berlin] SAVE_ORDER RAW: {"uid":"uid_1759065361350_sonvujglc","nomorNota":"LRK-KAS-250928-002","namaPelanggan":"s","tanggalTerima":"2025-09-28","tanggalSelesai":"2025-09-28","serviceId":1,"categoryId":1,"serviceName":"cuci lipat","categoryName":"Regular","pricePerKg":4000,"jumlahKg":5,"harga":20000,"payment":"none","tanggalBayar":null,"status":"progress","cabang":"cabang munjul"}
+[28-Sep-2025 15:16:01 Europe/Berlin] SAVE_ORDER parsed: Array
+(
+    [uid] => uid_1759065361350_sonvujglc
+    [nomorNota] => LRK-KAS-250928-002
+    [namaPelanggan] => s
+    [tanggalTerima] => 2025-09-28
+    [tanggalSelesai] => 2025-09-28
+    [serviceId] => 1
+    [categoryId] => 1
+    [serviceName] => cuci lipat
+    [categoryName] => Regular
+    [pricePerKg] => 4000
+    [jumlahKg] => 5
+    [harga] => 20000
+    [payment] => none
+    [tanggalBayar] => 
+    [status] => progress
+    [cabang] => cabang munjul
+)
+

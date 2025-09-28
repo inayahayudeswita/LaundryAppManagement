@@ -3,9 +3,237 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Dashboard - Sistem Laundry</title>
+  <title>Admin Dashboard - Laundry Rumah Kucek</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <!-- Load XLSX library early in head -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- Custom Badge Styles -->
+  <style>
+/* Badge Base Styling - UKURAN DIPERBESAR */
+.badge {
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-size: 12px !important; /* Increased from 10px */
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Nota Code Badge - UKURAN DIPERBESAR */
+.nota-badge {
+  font-family: 'Courier New', monospace !important;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+  color: #1e40af !important;
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-weight: 600 !important;
+  font-size: 12px !important; /* Increased from 10px */
+}
+
+/* Service Badge - Ungu seperti QRIS - UKURAN DIPERBESAR */
+.service-badge {
+  background: linear-gradient(135deg, #e9d5ff, #d8b4fe) !important;
+  color: #5b21b6 !important;
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-weight: 600 !important;
+  font-size: 12px !important; /* Increased from 10px */
+}
+
+/* Category Badge - Hijau seperti CASH - UKURAN DIPERBESAR */
+.category-badge {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  color: #065f46 !important;
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-weight: 600 !important;
+  font-size: 12px !important; /* Increased from 10px */
+}
+
+/* Payment Method Badges - UKURAN DIPERBESAR */
+.payment-badge {
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-size: 12px !important; /* Increased from 10px */
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  display: inline-block !important;
+}
+
+.payment-cash {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  color: #065f46 !important;
+}
+
+.payment-qris {
+  background: linear-gradient(135deg, #e9d5ff, #d8b4fe) !important;
+  color: #5b21b6 !important;
+}
+
+.payment-transfer {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+  color: #1e40af !important;
+}
+
+.payment-none {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  color: #92400e !important;
+}
+
+/* Status Badges - UKURAN DIPERBESAR */
+.status-progress {
+  background: linear-gradient(135deg, #fed7d7, #feb2b2) !important;
+  color: #742a2a !important;
+}
+
+.status-finished {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+  color: #065f46 !important;
+}
+
+/* Branch Badge - UKURAN DIPERBESAR */
+.branch-badge {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  color: #92400e !important;
+  padding: 6px 12px !important; /* Increased from 4px 8px */
+  border-radius: 8px !important; /* Increased from 6px */
+  font-weight: 600 !important;
+  font-size: 12px !important; /* Increased from 10px */
+}
+
+/* Currency styling - UKURAN DIPERBESAR */
+.currency {
+  font-weight: 700 !important;
+  color: #059669 !important;
+  font-size: 14px !important; /* Added larger font size */
+}
+
+/* Table text - UKURAN DIPERBESAR */
+tbody td {
+  font-size: 14px !important; /* Increased base text size from 12px to 14px */
+  line-height: 1.4 !important; /* Better line spacing */
+  padding: 12px 16px !important; /* Increased padding from 8px 12px */
+}
+
+/* Table headers - UKURAN DIPERBESAR */
+thead th {
+  font-size: 14px !important; /* Increased from default */
+  padding: 12px 16px !important; /* Increased padding */
+}
+
+/* Customer name specific styling */
+tbody td .block {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* Table row hover - Enhanced */
+tbody tr:hover {
+  background-color: #f8fafc;
+  transform: scale(1.005); /* Subtle scale effect on hover */
+  transition: all 0.2s ease;
+}
+
+/* Enhanced spacing for better readability */
+tbody tr {
+  border-bottom: 2px solid #f1f5f9 !important; /* Thicker border */
+}
+
+/* Make table more spacious overall */
+.table-container {
+  line-height: 1.6 !important;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .badge, .nota-badge, .service-badge, .category-badge, .payment-badge, .branch-badge {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+  
+  tbody td {
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+  }
+}
+
+/* Pagination Styles */
+.pagination-container {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: white;
+}
+
+.pagination-button {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.pagination-button.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-button:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pagination-button:first-child {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.pagination-button:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.pagination-ellipsis {
+  padding: 8px 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Responsive pagination */
+@media (max-width: 640px) {
+  .pagination-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pagination-button {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 36px;
+  }
+}
+  </style>
 </head>
 <body class="bg-gray-50 font-sans">
   <!-- NAVBAR -->
@@ -14,7 +242,7 @@
       <div class="flex justify-between items-center py-4">
         <a href="#" class="flex items-center space-x-2 text-xl font-bold text-gray-900">
           <i class="fas fa-tshirt text-blue-600"></i>
-          <span>Laundry Abdan</span>
+          <span>Laundry Rumah Kucek</span>
         </a>
         <div class="flex items-center space-x-4">
           <span id="adminName" class="text-gray-600 font-medium">Admin</span>
@@ -219,52 +447,127 @@
 
     <!-- FILTERS -->
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+    <!-- Existing Filters -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Cabang</label>
+      <select 
+        id="filterCabang" 
+        onchange="applyFilters()" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="">Semua Cabang</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+      <select 
+        id="filterStatus" 
+        onchange="applyFilters()" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="">Semua Status</option>
+        <option value="progress">On Progress</option>
+        <option value="finished">Finished</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Periode Default</label>
+      <select 
+        id="filterPeriod" 
+        onchange="handlePeriodChange()" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="all">Semua Data</option>
+        <option value="today">Hari Ini</option>
+        <option value="7days">7 Hari Terakhir</option>
+        <option value="30days">30 Hari Terakhir</option>
+        <option value="thisMonth">Bulan Ini</option>
+        <option value="custom">Pilih Tanggal Khusus</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Date Filter Section (Initially Hidden) -->
+  <div id="customDateSection" class="hidden border-t border-gray-200 pt-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <i class="fas fa-calendar-alt text-blue-500 mr-1"></i>
+          Mode Tanggal
+        </label>
+        <select 
+          id="dateMode" 
+          onchange="handleDateModeChange()" 
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <option value="single">Tanggal Tunggal</option>
+          <option value="range">Rentang Tanggal</option>
+        </select>
+      </div>
+      
+      <!-- Single Date Input -->
+      <div id="singleDateInput">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Tanggal</label>
+        <input 
+          type="date" 
+          id="singleDate" 
+          onchange="applyFilters()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+
+      <!-- Range Date Inputs -->
+      <div id="rangeDateInputs" class="hidden col-span-2 grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Cabang</label>
-          <select 
-            id="filterCabang" 
-            onchange="applyFilters()" 
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-play text-green-500 mr-1"></i>
+            Tanggal Mulai
+          </label>
+          <input 
+            type="date" 
+            id="startDate" 
+            onchange="applyFilters()"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="">Semua Cabang</option>
-            <option value="Cabang 1">Cabang 1</option>
-            <option value="Cabang 2">Cabang 2</option>
-          </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-          <select 
-            id="filterStatus" 
-            onchange="applyFilters()" 
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-stop text-red-500 mr-1"></i>
+            Tanggal Selesai
+          </label>
+          <input 
+            type="date" 
+            id="endDate" 
+            onchange="applyFilters()"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="">Semua Status</option>
-            <option value="progress">On Progress</option>
-            <option value="finished">Finished</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Periode</label>
-          <select 
-            id="filterPeriod" 
-            onchange="applyFilters()" 
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="all">Semua Data</option>
-            <option value="today">Hari Ini</option>
-            <option value="7days">7 Hari Terakhir</option>
-            <option value="30days">30 Hari Terakhir</option>
-            <option value="thisMonth">Bulan Ini</option>
-          </select>
-        </div>
-        <div>
-          <button 
-            onclick="resetFilters()" 
-            class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium">
-            <i class="fas fa-undo"></i>
-            <span>Reset Filter</span>
-          </button>
         </div>
       </div>
+
+      <!-- Action Button -->
+      <div class="flex space-x-2">
+        <button 
+          onclick="resetDateFilter()" 
+          class="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors duration-200 font-medium text-sm">
+          <i class="fas fa-calendar-times"></i>
+          <span>Reset</span>
+        </button>
+      </div>
     </div>
+
+    <!-- Date Filter Info -->
+    <div id="dateFilterInfo" class="mt-3 hidden">
+      <div class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+        <i class="fas fa-info-circle mr-2"></i>
+        <span id="dateFilterText">Filter aktif</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset All Filters Button -->
+  <div class="border-t border-gray-200 pt-4 mt-4">
+    <button 
+      onclick="resetFilters()" 
+      class="flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-medium">
+      <i class="fas fa-undo"></i>
+      <span>Reset Semua Filter</span>
+    </button>
+  </div>
+</div>
 
     <!-- ACTIONS -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
@@ -292,10 +595,10 @@
         <span id="dataCount" class="text-gray-600 text-sm font-medium">Total: 0 data</span>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[1300px] border-collapse">
+        <table class="w-full min-w-[1430px] border-collapse">
           <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[140px]">No. Nota</th>
+              <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 whitespace-nowrap min-w-[190px]">No. Nota</th>
               <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[120px]">Pelanggan</th>
               <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[100px]">Cabang</th>
               <th class="text-center py-3 px-4 font-semibold text-gray-700 text-sm border-b-2 border-gray-200 min-w-[90px]">Status</th>
@@ -311,21 +614,27 @@
             </tr>
           </thead>
           <tbody id="dataTable">
+            <!-- Data akan dimuat dari database melalui admin.js -->
             <tr>
               <td colspan="13" class="text-center py-16 text-gray-500 italic">Tidak ada data untuk ditampilkan</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <span id="paginationInfo" class="text-gray-600 text-sm font-medium">Menampilkan 0 dari 0 data</span>
-        <div id="pagination" class="flex items-center space-x-1"></div>
-      </div>
     </div>
   </div>
+  <!-- 🔥 PAGINATION SECTION - TAMBAHKAN INI -->
+  <div class="pagination-container px-6 py-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div id="paginationInfo" class="text-sm text-gray-600">
+      Menampilkan 0-0 dari 0 data
+    </div>
+    <div class="flex items-center space-x-2" id="pagination">
+      <!-- Pagination buttons akan diisi oleh JavaScript -->
+    </div>
+  </div>
+</div>
 
-  <!-- SCRIPTS -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script>
     // Format Rupiah input function
@@ -344,6 +653,12 @@
 
     // Override form submission to handle formatted values
     document.addEventListener('DOMContentLoaded', function() {
+      // Check if XLSX library is loaded
+      if (typeof XLSX === 'undefined') {
+        console.error('XLSX library not loaded!');
+        alert('Error: Excel library tidak dapat dimuat. Export Excel tidak tersedia.');
+      }
+
       const addServiceForm = document.getElementById('addServiceForm');
       if (addServiceForm) {
         addServiceForm.addEventListener('submit', async function(e) {
@@ -408,6 +723,11 @@
       }
     }
   </script>
+  
+
+
+  
+  <!-- Load admin.js after XLSX library -->
   <script src="js/admin.js"></script>
 </body>
 </html>

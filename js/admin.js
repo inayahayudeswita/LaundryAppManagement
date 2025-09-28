@@ -4,7 +4,7 @@
 let allData = [];
 let filteredData = [];
 let currentPage = 1;
-let itemsPerPage = 50;
+let itemsPerPage = 10;
 
 // Service pricing data
 let servicesData = [];
@@ -29,11 +29,18 @@ async function loadBranches() {
         
         // Update filter dropdown
         populateBranchFilter();
+
+        // Update jumlah cabang aktif (hanya role kasir)
+        const totalBranchesEl = document.getElementById('totalBranches');
+        if (totalBranchesEl) {
+            totalBranchesEl.textContent = branchesData.length;
+        }
         
     } catch (error) {
         console.error('Error loading branches:', error);
     }
 }
+
 
 // ===============================
 // POPULATE BRANCH FILTER DROPDOWN
@@ -94,13 +101,25 @@ function parseRupiahValue(formattedValue) {
 // ===============================
 document.addEventListener('DOMContentLoaded', async function() {
     checkAuth();
+    
+    // Check if XLSX library is loaded
+    if (typeof XLSX === 'undefined') {
+        console.error('XLSX library not loaded!');
+        // Try to disable export button
+        const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+        if (exportBtn) {
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Excel Library Error</span>';
+            exportBtn.title = 'XLSX library failed to load';
+        }
+    }
+    
     await loadBranches();   
     await loadServicePricing(); 
     await loadData();         
     updateStats();
-    applyFilters();
+    applyFilters(); // 🔥 Ini akan memanggil renderTable() dan updatePagination()
 });
-
 // ===============================
 // Authentication
 // ===============================
@@ -442,9 +461,21 @@ async function loadData() {
 function updateStats() {
     console.log('Updating stats with data:', allData.length, 'items');
     
-    const totalRevenue = allData
+    // Calculate total revenue from finished orders + on progress orders with payment
+    const finishedRevenue = allData
         .filter(function(item) { return item.status === 'Finished'; })
         .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
+    
+    const onProgressPaidRevenue = allData
+        .filter(function(item) { 
+            return item.status === 'On Progress' && 
+                    item.payment && 
+                    item.payment !== 'none' && 
+                    ['cash', 'transfer', 'qris'].includes(item.payment.toLowerCase()); 
+        })
+        .reduce(function(sum, item) { return sum + parseInt(item.harga); }, 0);
+    
+    const totalRevenue = finishedRevenue + onProgressPaidRevenue;
     
     const totalTransactions = allData.length;
     const onProgressCount = allData.filter(function(item) { return item.status === 'On Progress'; }).length;
@@ -474,6 +505,8 @@ function updateStats() {
     
     console.log('Stats updated:', {
         totalRevenue: formatRupiah(totalRevenue),
+        finishedRevenue: formatRupiah(finishedRevenue),
+        onProgressPaidRevenue: formatRupiah(onProgressPaidRevenue),
         totalTransactions,
         onProgressCount,
         finishedCount
@@ -558,10 +591,12 @@ function performSearch() {
 // ===============================
 // Table Rendering with Separated Service Name and Category
 // ===============================
+
 function renderTable() {
     const tbody = document.getElementById('dataTable');
     if (!tbody) return;
     
+    // 🔥 POTONG DATA BERDASARKAN PAGINATION
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const pageData = filteredData.slice(startIndex, endIndex);
@@ -574,22 +609,27 @@ function renderTable() {
     }
     
     tbody.innerHTML = pageData.map(function(item, index) {
+        // Fixed payment logic with proper class mapping
         let paymentDisplay = 'BELUM BAYAR';
-        let paymentClass = 'bg-yellow-100 text-yellow-800';
-        
+        let paymentClass = 'none'; // This will map to payment-none CSS class
+
         if (item.status === 'On Progress') {
             if (item.payment && item.payment !== 'none') {
                 paymentDisplay = item.payment.toUpperCase();
-                paymentClass = 'bg-blue-100 text-blue-800';
+                paymentClass = item.payment.toLowerCase(); // cash, transfer, qris
             }
         } else if (item.status === 'Finished') {
             if (item.metodePembayaran && item.metodePembayaran !== 'belum bayar' && item.metodePembayaran !== '-') {
                 paymentDisplay = item.metodePembayaran.toUpperCase();
-                paymentClass = 'bg-green-100 text-green-800';
+                paymentClass = item.metodePembayaran.toLowerCase(); // cash, transfer, qris
             }
         }
         
-        const statusClass = item.status === 'Finished' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+        // Ensure paymentClass is valid for CSS
+        const validPaymentClasses = ['cash', 'transfer', 'qris', 'none'];
+        if (!validPaymentClasses.includes(paymentClass)) {
+            paymentClass = 'none';
+        }
         
         // Parse service name and category from jenisLaundry field
         let serviceName = 'Unknown Service';
@@ -605,16 +645,16 @@ function renderTable() {
         
         return `<tr class="hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}">
             <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 140px;">
-                <span class="font-mono text-blue-600 whitespace-nowrap">${item.nomorNota || '-'}</span>
+                <span class="nota-badge">${item.nomorNota || '-'}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 120px;">
                 <span class="block" title="${item.namaPelanggan || '-'}">${item.namaPelanggan || '-'}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 100px;">
-                <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs inline-block">${item.cabang || '-'}</span>
+                <span class="branch-badge">${item.cabang || '-'}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100 text-center" style="min-width: 90px;">
-                <span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium inline-block">${item.status}</span>
+                <span class="badge status-${item.status === 'Finished' ? 'finished' : 'progress'}">${item.status}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100 whitespace-nowrap" style="min-width: 100px;">
                 ${formatDate(item.tanggalTerima)}
@@ -623,10 +663,10 @@ function renderTable() {
                 ${formatDate(item.tanggalSelesai)}
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 140px;">
-                <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs inline-block" title="${serviceName}">${serviceName}</span>
+                <span class="service-badge" title="${serviceName}">${serviceName}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100" style="min-width: 120px;">
-                <span class="px-2 py-1 bg-green-50 text-green-700 rounded text-xs inline-block" title="${serviceCategory}">${serviceCategory}</span>
+                <span class="category-badge" title="${serviceCategory}">${serviceCategory}</span>
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100 text-center font-medium" style="min-width: 60px;">
                 ${item.jumlahKg || 0} kg
@@ -638,10 +678,10 @@ function renderTable() {
                 ${item.tanggalBayar !== '-' ? formatDate(item.tanggalBayar) : '-'}
             </td>
             <td class="py-3 px-4 text-sm border-b border-gray-100 text-center" style="min-width: 100px;">
-                <span class="px-2 py-1 ${paymentClass} rounded-full text-xs font-medium inline-block">${paymentDisplay}</span>
+                <span class="payment-badge payment-${paymentClass}">${paymentDisplay}</span>
             </td>
-            <td class="py-3 px-4 text-sm border-b border-gray-100 text-right font-semibold text-green-600" style="min-width: 120px;">
-                ${formatRupiah(item.harga || 0)}
+            <td class="py-3 px-4 text-sm border-b border-gray-100 text-right" style="min-width: 120px;">
+                <span class="currency">${formatRupiah(item.harga || 0)}</span>
             </td>
         </tr>`;
     }).join('');
@@ -658,37 +698,97 @@ function updatePagination() {
     const paginationContainer = document.getElementById('pagination');
     const paginationInfo = document.getElementById('paginationInfo');
     
-    if (!paginationContainer || !paginationInfo) return;
-    
-    const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
-    paginationInfo.textContent = 'Menampilkan ' + startItem + '-' + endItem + ' dari ' + filteredData.length + ' data';
-    
-    let paginationHTML = '';
-    
-    if (currentPage > 1) {
-        paginationHTML += `<button class="px-3 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-l-md transition-colors" onclick="goToPage(${currentPage - 1})">
-            <i class="fas fa-chevron-left"></i>
-        </button>`;
+    if (!paginationContainer || !paginationInfo) {
+        console.error('Pagination elements not found!');
+        return;
     }
     
+    // Update info text
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
+    const totalItems = filteredData.length;
+    
+    paginationInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalItems} data`;
+    
+    // Jika tidak ada data atau hanya 1 halaman, sembunyikan pagination
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
     const maxVisiblePages = 5;
+    
+    // Previous button
+    if (currentPage > 1) {
+        paginationHTML += `
+            <button class="pagination-button" onclick="goToPage(${currentPage - 1})" title="Halaman Sebelumnya">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+    } else {
+        paginationHTML += `
+            <button class="pagination-button" disabled>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+    }
+    
+    // Calculate visible page range
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
     
+    // Adjust if we're at the end
     if (endPage - startPage < maxVisiblePages - 1) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
     
-    for (let i = startPage; i <= endPage; i++) {
-        const activeClass = i === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
-        paginationHTML += `<button class="px-3 py-1 border ${activeClass} transition-colors" onclick="goToPage(${i})">${i}</button>`;
+    // First page and ellipsis if needed
+    if (startPage > 1) {
+        paginationHTML += `
+            <button class="pagination-button" onclick="goToPage(1)">1</button>
+        `;
+        if (startPage > 2) {
+            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        }
     }
     
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHTML += `
+                <button class="pagination-button active">${i}</button>
+            `;
+        } else {
+            paginationHTML += `
+                <button class="pagination-button" onclick="goToPage(${i})">${i}</button>
+            `;
+        }
+    }
+    
+    // Last page and ellipsis if needed
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+        }
+        paginationHTML += `
+            <button class="pagination-button" onclick="goToPage(${totalPages})">${totalPages}</button>
+        `;
+    }
+    
+    // Next button
     if (currentPage < totalPages) {
-        paginationHTML += `<button class="px-3 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-r-md transition-colors" onclick="goToPage(${currentPage + 1})">
-            <i class="fas fa-chevron-right"></i>
-        </button>`;
+        paginationHTML += `
+            <button class="pagination-button" onclick="goToPage(${currentPage + 1})" title="Halaman Berikutnya">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    } else {
+        paginationHTML += `
+            <button class="pagination-button" disabled>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
     }
     
     paginationContainer.innerHTML = paginationHTML;
@@ -698,74 +798,571 @@ function goToPage(page) {
     currentPage = page;
     renderTable();
     updatePagination();
+    
+    // Scroll ke atas tabel untuk UX yang lebih baik
+    const tableContainer = document.querySelector('.overflow-x-auto');
+    if (tableContainer) {
+        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 // ===============================
-// Export Functions
+// Export Functions - FIXED WITH ERROR CHECKING
 // ===============================
-function exportExcel() {
+async function exportExcel() {
     if (filteredData.length === 0) {
         alert('Tidak ada data untuk diekspor');
         return;
     }
-    
-    const excelData = filteredData.map(function(item) {
-        let paymentExport = 'BELUM BAYAR';
-        if (item.metodePembayaran && item.metodePembayaran !== 'belum-bayar' && item.metodePembayaran !== '-') {
-            paymentExport = item.metodePembayaran;
+
+    try {
+        // Buat workbook baru dengan ExcelJS
+        const workbook = new ExcelJS.Workbook();
+        
+        // ===== SHEET 1: DATA ORDER =====
+        const orderSheet = workbook.addWorksheet('Data Order');
+
+        // === HEADER SHEET 1 ===
+        const headers = ['No. Nota', 'Pelanggan', 'Cabang', 'Status', 'Tgl Terima', 'Tgl Selesai', 'Jenis', 'Kg', 'Tgl Ambil', 'Tgl Bayar', 'Pembayaran', 'Harga'];
+        
+        // Tambah header dengan styling
+        const headerRow = orderSheet.addRow(headers);
+        headerRow.eachCell((cell, colNumber) => {
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9EAD3' } // Hijau muda
+            };
+            cell.font = {
+                bold: true,
+                color: { argb: 'FF000000' }
+            };
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        // === DATA TRANSAKSI SHEET 1 ===
+        filteredData.forEach(item => {
+            let paymentExport = 'BELUM BAYAR';
+            if (item.payment && item.payment !== 'none') {
+                paymentExport = item.payment.toUpperCase();
+            } else if (item.metodePembayaran && item.metodePembayaran !== 'belum-bayar' && item.metodePembayaran !== '-') {
+                paymentExport = item.metodePembayaran.toUpperCase();
+            }
+
+            const rowData = [
+                item.nomorNota || '-',
+                item.namaPelanggan || '-',
+                item.cabang || '-',
+                item.status || '-',
+                item.tanggalTerima || '-',
+                item.tanggalSelesai || '-',
+                item.jenisLaundry || '-',
+                item.jumlahKg || 0,
+                item.tanggalAmbil !== '-' ? item.tanggalAmbil : '',
+                item.tanggalBayar !== '-' ? item.tanggalBayar : '',
+                paymentExport,
+                item.harga || 0
+            ];
+
+            const dataRow = orderSheet.addRow(rowData);
+            
+            // Styling untuk setiap cell dalam row
+            dataRow.eachCell((cell, colNumber) => {
+                // Border untuk semua cell
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                
+                // Fill color kuning untuk row BELUM BAYAR
+                if (paymentExport === 'BELUM BAYAR') {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFFE599' } // Kuning
+                    };
+                }
+                
+                // Alignment
+                if (colNumber === 8 || colNumber === 12) { // Kg dan Harga
+                    cell.alignment = { vertical: 'middle', horizontal: 'right' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                }
+            });
+        });
+
+        // === SET COLUMN WIDTHS SHEET 1 ===
+        orderSheet.columns = [
+            { width: 20 }, // No. Nota
+            { width: 15 }, // Pelanggan
+            { width: 12 }, // Cabang
+            { width: 12 }, // Status
+            { width: 12 }, // Tgl Terima
+            { width: 12 }, // Tgl Selesai
+            { width: 15 }, // Jenis
+            { width: 8 },  // Kg
+            { width: 12 }, // Tgl Ambil
+            { width: 12 }, // Tgl Bayar
+            { width: 12 }, // Pembayaran
+            { width: 12 }  // Harga
+        ];
+
+        // ===== SHEET 2: RINGKASAN LAPORAN =====
+        const summarySheet = workbook.addWorksheet('Ringkasan Laporan');
+
+        // === HITUNG STATISTIK ===
+        const onProgressData = filteredData.filter(item => item.status === 'On Progress');
+        const finishedData = filteredData.filter(item => item.status === 'Finished');
+
+        const onProgressBelumBayar = onProgressData.filter(item => !item.payment || item.payment === 'none');
+        const onProgressCash = onProgressData.filter(item => item.payment && item.payment.toLowerCase() === 'cash');
+        const onProgressTransfer = onProgressData.filter(item => item.payment && item.payment.toLowerCase() === 'transfer');
+        const onProgressQris = onProgressData.filter(item => item.payment && item.payment.toLowerCase() === 'qris');
+
+        const finishedCash = finishedData.filter(item =>
+            (item.payment && item.payment.toLowerCase() === 'cash') ||
+            (item.metodePembayaran && item.metodePembayaran.toLowerCase() === 'cash')
+        );
+        const finishedTransfer = finishedData.filter(item =>
+            (item.payment && item.payment.toLowerCase() === 'transfer') ||
+            (item.metodePembayaran && item.metodePembayaran.toLowerCase() === 'transfer')
+        );
+        const finishedQris = finishedData.filter(item =>
+            (item.payment && item.payment.toLowerCase() === 'qris') ||
+            (item.metodePembayaran && item.metodePembayaran.toLowerCase() === 'qris')
+        );
+
+        function sumHarga(arr) {
+            return arr.reduce((sum, item) => sum + (parseInt(item.harga) || 0), 0);
+        }
+
+        // === HEADER RINGKASAN ===
+        const summaryMainHeader = summarySheet.addRow(['RINGKASAN LAPORAN']);
+        summaryMainHeader.getCell(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4472C4' } // Biru tua
+        };
+        summaryMainHeader.getCell(1).font = { 
+            bold: true, 
+            color: { argb: 'FFFFFFFF' }, // Text putih
+            size: 16 
+        };
+        summaryMainHeader.getCell(1).border = {
+            top: { style: 'thin' }, left: { style: 'thin' },
+            bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+        summaryMainHeader.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+
+        // Merge cells untuk header utama
+        summarySheet.mergeCells('A1:E1');
+
+        summarySheet.addRow([]); // Baris kosong
+
+        // === RINGKASAN UMUM ===
+        const generalSummary = [
+            ['Kategori', 'Jumlah'],
+            ['Total On Progress', onProgressData.length],
+            ['Total Finished', finishedData.length],
+            ['Total Semua Order', filteredData.length],
+            ['Total Pendapatan', sumHarga(onProgressCash) + sumHarga(onProgressTransfer) + sumHarga(onProgressQris) + sumHarga(finishedData)]
+        ];
+
+        generalSummary.forEach((rowData, index) => {
+            const row = summarySheet.addRow(rowData);
+            row.eachCell((cell, colNumber) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                
+                if (index === 0) { // Header row
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFB6D7FF' }
+                    };
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { 
+                        vertical: 'middle', 
+                        horizontal: colNumber === 2 ? 'right' : 'left' 
+                    };
+                }
+            });
+        });
+
+        summarySheet.addRow([]); // Baris kosong
+
+        // === DETAIL ON PROGRESS ===
+        const onProgressHeader = summarySheet.addRow(['DETAIL ON PROGRESS', '', '', '', '']);
+        onProgressHeader.getCell(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF70AD47' } // Hijau
+        };
+        onProgressHeader.getCell(1).font = { 
+            bold: true, 
+            color: { argb: 'FFFFFFFF' },
+            size: 14 
+        };
+        onProgressHeader.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        summarySheet.mergeCells(`A${onProgressHeader.number}:E${onProgressHeader.number}`);
+
+        const onProgressDetail = [
+            ['Status Pembayaran', 'Belum Bayar', 'Cash', 'Transfer', 'Qris'],
+            ['Jumlah Order', onProgressBelumBayar.length, onProgressCash.length, onProgressTransfer.length, onProgressQris.length],
+            ['Nominal Masuk', sumHarga(onProgressBelumBayar), sumHarga(onProgressCash), sumHarga(onProgressTransfer), sumHarga(onProgressQris)]
+        ];
+
+        onProgressDetail.forEach((rowData, index) => {
+            const row = summarySheet.addRow(rowData);
+            row.eachCell((cell, colNumber) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                
+                if (index === 0) { // Header row
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFD5E8D4' } // Hijau muda
+                    };
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { 
+                        vertical: 'middle', 
+                        horizontal: colNumber === 1 ? 'left' : 'right' 
+                    };
+                }
+            });
+        });
+
+        // === TAMBAH TOTAL ROWS DENGAN MERGED CELLS ===
+        
+        // Total Nominal Kotor
+        const totalKotorRow = summarySheet.addRow(['Total Nominal Kotor', sumHarga(onProgressData)]);
+        totalKotorRow.getCell(1).font = { bold: true };
+        totalKotorRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+        totalKotorRow.getCell(2).font = { bold: true };
+        totalKotorRow.getCell(2).alignment = { vertical: 'middle', horizontal: 'right' };
+        
+        // Apply borders to all cells in the row
+        for (let col = 1; col <= 5; col++) {
+            totalKotorRow.getCell(col).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
         }
         
-        return {
-            'No. Nota': item.nomorNota || '-',
-            'Pelanggan': item.namaPelanggan || '-',
-            'Cabang': item.cabang || '-',
-            'Status': item.status || '-',
-            'Tgl Terima': item.tanggalTerima || '-',
-            'Tgl Selesai': item.tanggalSelesai || '-',
-            'Jenis': item.jenisLaundry || '-',
-            'Kg': item.jumlahKg || 0,
-            'Tgl Ambil': item.tanggalAmbil !== '-' ? item.tanggalAmbil : '',
-            'Tgl Bayar': item.tanggalBayar !== '-' ? item.tanggalBayar : '',
-            'Pembayaran': paymentExport,
-            'Harga': item.harga || 0
-        };
-    });
-    
-    const onProgressCount = filteredData.filter(function(item) { return item.status === 'On Progress'; }).length;
-    const finishedCount = filteredData.filter(function(item) { return item.status === 'Finished'; }).length;
-    
-    const totalHarga = filteredData
-        .filter(function(item) { return item.status === 'Finished'; })
-        .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
+        // Merge cells B to E for total kotor
+        summarySheet.mergeCells(`B${totalKotorRow.number}:E${totalKotorRow.number}`);
+        
+        // Total Nominal Bersih
+        const totalBersihRow = summarySheet.addRow(['Total Nominal Bersih', sumHarga(onProgressCash) + sumHarga(onProgressTransfer) + sumHarga(onProgressQris)]);
+        totalBersihRow.getCell(1).font = { bold: true };
+        totalBersihRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+        totalBersihRow.getCell(2).font = { bold: true };
+        totalBersihRow.getCell(2).alignment = { vertical: 'middle', horizontal: 'right' };
+        
+        // Apply borders to all cells in the row
+        for (let col = 1; col <= 5; col++) {
+            totalBersihRow.getCell(col).border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        }
+        
+        // Merge cells B to E for total bersih
+        summarySheet.mergeCells(`B${totalBersihRow.number}:E${totalBersihRow.number}`);
 
-    const totalBelumBayar = filteredData
-        .filter(function(item) { return !item.metodePembayaran || item.metodePembayaran === 'belum bayar' || item.metodePembayaran === '-'; })
-        .reduce(function(sum, item) { return sum + parseInt(item.harga || 0); }, 0);
+        summarySheet.addRow([]); // Baris kosong
+
+        // === DETAIL FINISHED ===
+        const finishedHeader = summarySheet.addRow(['DETAIL FINISHED', '', '', '', '']);
+        finishedHeader.getCell(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF4B183' } // Orange
+        };
+        finishedHeader.getCell(1).font = { 
+            bold: true, 
+            color: { argb: 'FF000000' },
+            size: 14 
+        };
+        finishedHeader.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        summarySheet.mergeCells(`A${finishedHeader.number}:E${finishedHeader.number}`);
+
+        const finishedDetail = [
+            ['Metode Pembayaran', 'Cash', 'Transfer', 'Qris', 'Total'],
+            ['Jumlah Order', finishedCash.length, finishedTransfer.length, finishedQris.length, finishedData.length],
+            ['Nominal', sumHarga(finishedCash), sumHarga(finishedTransfer), sumHarga(finishedQris), sumHarga(finishedData)]
+        ];
+
+        finishedDetail.forEach((rowData, index) => {
+            const row = summarySheet.addRow(rowData);
+            row.eachCell((cell, colNumber) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                
+                if (index === 0) { // Header row
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFCE4D6' } // Orange muda
+                    };
+                    cell.font = { bold: true };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else {
+                    cell.alignment = { 
+                        vertical: 'middle', 
+                        horizontal: colNumber === 1 ? 'left' : 'right' 
+                    };
+                }
+            });
+        });
+
+        // === SET COLUMN WIDTHS SHEET 2 ===
+        summarySheet.columns = [
+            { width: 20 }, // Kategori/Status
+            { width: 15 }, // Data 1
+            { width: 15 }, // Data 2
+            { width: 15 }, // Data 3
+            { width: 15 }  // Data 4
+        ];
+
+        // === EXPORT FILE ===
+        const fileName = `laporan_admin_${new Date().toISOString().split("T")[0]}.xlsx`;
+        
+        // Generate buffer dan download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        console.log('Excel file exported successfully:', fileName);
+        alert('Data berhasil diekspor ke file: ' + fileName + '\n\nSheet 1: Data Order\nSheet 2: Ringkasan Laporan');
+
+    } catch (error) {
+        console.error('Error exporting Excel:', error);
+        alert('Terjadi kesalahan saat mengekspor data Excel: ' + error.message);
+    }
+}
+
+
+// ===============================
+// Date Filter Functions
+// ===============================
+function handlePeriodChange() {
+    const selectedPeriod = document.getElementById('filterPeriod').value;
+    const customDateSection = document.getElementById('customDateSection');
     
-    // Add summary
-    excelData.push({}, {
-        'No. Nota': 'RINGKASAN LAPORAN'
-    }, {
-        'No. Nota': 'Total On Progress',
-        'Pelanggan': onProgressCount
-    }, {
-        'No. Nota': 'Total Finished',
-        'Pelanggan': finishedCount
-    }, {
-        'No. Nota': 'TOTAL BELUM BAYAR',
-        'Harga': totalBelumBayar
-    }, {
-        'No. Nota': 'TOTAL PENDAPATAN',
-        'Harga': totalHarga
+    if (selectedPeriod === 'custom') {
+        customDateSection.classList.remove('hidden');
+        // Set default to single date mode
+        document.getElementById('dateMode').value = 'single';
+        handleDateModeChange();
+    } else {
+        customDateSection.classList.add('hidden');
+        resetDateFilterInfo();
+    }
+    
+    applyFilters();
+}
+
+function handleDateModeChange() {
+    const dateMode = document.getElementById('dateMode').value;
+    const singleDateInput = document.getElementById('singleDateInput');
+    const rangeDateInputs = document.getElementById('rangeDateInputs');
+    
+    if (dateMode === 'single') {
+        singleDateInput.classList.remove('hidden');
+        rangeDateInputs.classList.add('hidden');
+    } else {
+        singleDateInput.classList.add('hidden');
+        rangeDateInputs.classList.remove('hidden');
+    }
+    
+    // Clear previous date values
+    document.getElementById('singleDate').value = '';
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    
+    resetDateFilterInfo();
+    applyFilters();
+}
+
+function resetDateFilter() {
+    document.getElementById('filterPeriod').value = 'all';
+    document.getElementById('customDateSection').classList.add('hidden');
+    document.getElementById('singleDate').value = '';
+    document.getElementById('startDate').value = '';
+    document.getElementById('endDate').value = '';
+    resetDateFilterInfo();
+    applyFilters();
+}
+
+function resetDateFilterInfo() {
+    const dateFilterInfo = document.getElementById('dateFilterInfo');
+    if (dateFilterInfo) {
+        dateFilterInfo.classList.add('hidden');
+    }
+}
+
+function updateDateFilterInfo(text) {
+    const dateFilterInfo = document.getElementById('dateFilterInfo');
+    const dateFilterText = document.getElementById('dateFilterText');
+    
+    if (dateFilterInfo && dateFilterText) {
+        dateFilterText.textContent = text;
+        dateFilterInfo.classList.remove('hidden');
+    }
+}
+
+// ===============================
+// Filters
+// ===============================
+function applyFilters() {
+    const selectedCabang = document.getElementById('filterCabang') ? document.getElementById('filterCabang').value : '';
+    const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
+    const selectedPeriod = document.getElementById('filterPeriod') ? document.getElementById('filterPeriod').value : 'all';
+    const searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+    
+    filteredData = allData.filter(function(item) {
+        if (selectedCabang && item.cabang !== selectedCabang) return false;
+        
+        if (selectedStatus === 'progress' && item.status !== 'On Progress') return false;
+        if (selectedStatus === 'finished' && item.status !== 'Finished') return false;
+        
+        // Handle date filtering
+        if (selectedPeriod !== 'all') {
+            const itemDate = new Date(item.tanggalTerima);
+            const now = new Date();
+            
+            if (selectedPeriod === 'custom') {
+                // Handle custom date filtering
+                const dateMode = document.getElementById('dateMode') ? document.getElementById('dateMode').value : 'single';
+                
+                if (dateMode === 'single') {
+                    const singleDate = document.getElementById('singleDate') ? document.getElementById('singleDate').value : '';
+                    if (singleDate) {
+                        const selectedDate = new Date(singleDate);
+                        const itemDateOnly = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+                        const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                        
+                        if (itemDateOnly.getTime() !== selectedDateOnly.getTime()) return false;
+                        
+                        // Update filter info
+                        updateDateFilterInfo(`Filter: ${selectedDate.toLocaleDateString('id-ID')}`);
+                    }
+                } else {
+                    const startDate = document.getElementById('startDate') ? document.getElementById('startDate').value : '';
+                    const endDate = document.getElementById('endDate') ? document.getElementById('endDate').value : '';
+                    
+                    if (startDate && endDate) {
+                        const startDateTime = new Date(startDate);
+                        const endDateTime = new Date(endDate);
+                        
+                        // Set time to cover full day range
+                        startDateTime.setHours(0, 0, 0, 0);
+                        endDateTime.setHours(23, 59, 59, 999);
+                        
+                        if (itemDate < startDateTime || itemDate > endDateTime) return false;
+                        
+                        // Update filter info
+                        updateDateFilterInfo(`Filter: ${startDateTime.toLocaleDateString('id-ID')} - ${endDateTime.toLocaleDateString('id-ID')}`);
+                    } else if (startDate) {
+                        const startDateTime = new Date(startDate);
+                        startDateTime.setHours(0, 0, 0, 0);
+                        
+                        if (itemDate < startDateTime) return false;
+                        
+                        // Update filter info
+                        updateDateFilterInfo(`Filter: Dari ${startDateTime.toLocaleDateString('id-ID')}`);
+                    } else if (endDate) {
+                        const endDateTime = new Date(endDate);
+                        endDateTime.setHours(23, 59, 59, 999);
+                        
+                        if (itemDate > endDateTime) return false;
+                        
+                        // Update filter info
+                        updateDateFilterInfo(`Filter: Sampai ${endDateTime.toLocaleDateString('id-ID')}`);
+                    }
+                }
+            } else {
+                // Handle predefined periods
+                switch (selectedPeriod) {
+                    case 'today':
+                        if (itemDate.toDateString() !== now.toDateString()) return false;
+                        break;
+                    case '7days':
+                        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        if (itemDate < sevenDaysAgo) return false;
+                        break;
+                    case '30days':
+                        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        if (itemDate < thirtyDaysAgo) return false;
+                        break;
+                    case 'thisMonth':
+                        if (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear()) return false;
+                        break;
+                }
+            }
+        }
+        
+        if (searchTerm) {
+            const searchFields = [
+                item.nomorNota || '',
+                item.namaPelanggan || '',
+                item.jenisLaundry || '',
+                item.cabang || '',
+                item.uid || ''
+            ].map(function(field) { return field.toLowerCase(); });
+            
+            if (!searchFields.some(function(field) { return field.includes(searchTerm); })) return false;
+        }
+        
+        return true;
     });
     
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Laporan Admin');
-    
-    const fileName = 'laporan_admin_' + new Date().toISOString().split('T')[0] + '.xlsx';
-    XLSX.writeFile(wb, fileName);
+    currentPage = 1;
+    renderTable();
+    updatePagination();
 }
+
+
 
 // ===============================
 // Auto Refresh Data

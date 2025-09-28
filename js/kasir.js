@@ -27,6 +27,17 @@ function initializeUser() {
     }
 }
 
+function generatePaymentBadge(paymentMethod, isOnProgress = false) {
+    const method = paymentMethod || 'none';
+    const displayText = method === 'none' ? 'BELUM BAYAR' : method.toUpperCase();
+    
+    if (isOnProgress && method === 'none') {
+        return `<span class="payment-status" data-payment="none">${displayText}</span>`;
+    } else {
+        return `<span class="jenis-badge" data-payment="${method}">${displayText}</span>`;
+    }
+}
+
 // Format tanggal YYMMDD
 function formatDateForNumber(date) {
     const yy = String(date.getFullYear()).slice(-2);
@@ -35,24 +46,45 @@ function formatDateForNumber(date) {
     return `${yy}${mm}${dd}`;
 }
 
-// Fungsi untuk generate nomor nota yang sebenarnya (hanya dipanggil saat simpan)
-function generateActualNumber() {
-    const dateStr = formatDateForNumber(new Date());
-    const key = `autoNumber_${CABANG}_${dateStr}`;
-    let currentNumber = parseInt(localStorage.getItem(key) || "0") + 1;
-    return `LRK-PWK-${dateStr}-${currentNumber.toString().padStart(3, "0")}`;
+// Function to get user name abbreviation (first 3 letters from NAME field)
+function getUserNameAbbreviation() {
+    if (!currentUser || !currentUser.name) {
+        return 'PWK'; // fallback to default
+    }
+    
+    // Take first 3 letters of NAME and convert to uppercase
+    const name = currentUser.name.replace(/\s+/g, ''); // remove spaces
+    const abbreviation = name.substring(0, 3).toUpperCase();
+    
+    // Ensure minimum 3 characters, pad with 'X' if needed
+    return abbreviation.padEnd(3, 'X');
 }
 
-// Fungsi untuk generate preview nomor (tanpa menaikkan counter)
 function generatePreviewNumber() {
     const dateStr = formatDateForNumber(new Date());
+    const userAbbrev = getUserNameAbbreviation();
     const key = `autoNumber_${CABANG}_${dateStr}`;
     let currentNumber = parseInt(localStorage.getItem(key) || "0");
     
     // Hanya preview: angka saat ini + 1 (hanya untuk display)
     const previewNumber = currentNumber + 1;
-    return `LRK-PWK-${dateStr}-${previewNumber.toString().padStart(3, "0")}`;
+    return `LRK-${userAbbrev}-${dateStr}-${previewNumber.toString().padStart(3, "0")}`;
 }
+
+function generateActualNumber() {
+    const dateStr = formatDateForNumber(new Date());
+    const userAbbrev = getUserNameAbbreviation();
+    const key = `autoNumber_${CABANG}_${dateStr}`;
+    let currentNumber = parseInt(localStorage.getItem(key) || "0") + 1;
+    return `LRK-${userAbbrev}-${dateStr}-${currentNumber.toString().padStart(3, "0")}`;
+}
+
+function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // format YYYY-MM-DD
+}
+
+
 
 // 🔹 Saat simpan berhasil, baru increment counter
 async function saveData() {
@@ -60,13 +92,10 @@ async function saveData() {
         const modal = document.getElementById('formModal');
         const uidEdit = modal?.dataset?.uid || null;
         
-        // 🔹 GENERATE NOMOR NOTA YANG SESUNGGUHNYA HANYA JIKA TAMBAH DATA BARU
         let nomorNota;
         if (!uidEdit) {
-            // TAMBAH DATA BARU: generate nomor nota yang sebenarnya
             nomorNota = generateActualNumber();
         } else {
-            // EDIT DATA: gunakan nomor nota yang sudah ada
             nomorNota = document.getElementById('nomorNota').value || '';
         }
 
@@ -78,9 +107,31 @@ async function saveData() {
         const categoryId = parseInt(categorySelect?.value || 0);
         const categoryName = categorySelect?.selectedOptions?.[0]?.dataset?.categoryName || getCategoryNameById(serviceId, categoryId);
         const pricePerKg = parseInt(document.getElementById('harga')?.dataset?.pricePerKg || 0);
-        const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
+        
+        // 🔥 PERBAIKAN UTAMA: Pastikan parseFloat dan toFixed untuk presisi
+        const jumlahKgRaw = document.getElementById('jumlahKg').value;
+        const jumlahKg = parseFloat(jumlahKgRaw) || 0;
+        
+        // Validasi input decimal
+        if (jumlahKg <= 0) {
+            alert('Jumlah Kg harus lebih dari 0');
+            return;
+        }
+        
+        console.log('🔍 DEBUG jumlahKg:', {
+            raw: jumlahKgRaw,
+            parsed: jumlahKg,
+            type: typeof jumlahKg,
+            fixed: jumlahKg.toFixed(2)
+        });
+        
         const harga = parseInt(document.getElementById('harga').value || (pricePerKg * jumlahKg) || 0);
         const metodePembayaran = document.querySelector("input[name='formPayment']:checked")?.value || 'none';
+
+        let tanggalBayar = null;
+        if (metodePembayaran !== 'none') {
+            tanggalBayar = new Date().toISOString().split('T')[0]; // isi otomatis hari ini
+        }
 
         if (!nomorNota || !namaPelanggan || !tanggalTerima || !tanggalSelesai || serviceId <= 0 || categoryId <= 0 || jumlahKg <= 0) {
             alert('Lengkapi semua field yang wajib diisi!');
@@ -98,12 +149,15 @@ async function saveData() {
             serviceName: getServiceNameById(serviceId),
             categoryName,
             pricePerKg,
-            jumlahKg,
+            jumlahKg: jumlahKg, // 🔥 Kirim sebagai number, bukan string
             harga,
             payment: metodePembayaran,
+            tanggalBayar: tanggalBayar,
             status: 'progress',
             cabang: document.getElementById('currentBranch')?.textContent || null
         };
+
+        console.log('🔍 DEBUG payload jumlahKg:', payload.jumlahKg, typeof payload.jumlahKg);
 
         const endpoint = uidEdit ? 'backend/update_order.php' : 'backend/save_order.php';
         const res = await fetch(endpoint, {
@@ -116,13 +170,10 @@ async function saveData() {
         
         if (resp.success) {
             if (!uidEdit) { 
-                // ✅ INCREMENT COUNTER HANYA JIKA SIMPAN DATA BARU BERHASIL
                 const dateStr = formatDateForNumber(new Date());
                 const key = `autoNumber_${CABANG}_${dateStr}`;
                 let currentNumber = parseInt(localStorage.getItem(key) || "0");
                 localStorage.setItem(key, (currentNumber + 1).toString());
-                
-                console.log(`Counter dinaikkan: ${currentNumber} → ${currentNumber + 1}`);
             }
 
             alert(uidEdit ? 'Order berhasil diupdate!' : 'Order berhasil disimpan!');
@@ -225,17 +276,34 @@ function getServicePriceByIdCategory(serviceId, categoryId) {
 function calculatePrice() {
     const serviceSelect = document.getElementById('serviceName');
     const categorySelect = document.getElementById('jenisLaundry');
-    const jumlahKg = parseFloat(document.getElementById('jumlahKg').value) || 0;
+    const jumlahKgInput = document.getElementById('jumlahKg');
     const hargaInput = document.getElementById('harga');
 
     const serviceId = serviceSelect ? parseInt(serviceSelect.value) : 0;
     const categoryId = categorySelect ? categorySelect.value : '';
+    
+    // 🔥 PERBAIKAN: Pastikan parseFloat konsisten
+    const jumlahKgRaw = jumlahKgInput.value;
+    const jumlahKg = parseFloat(jumlahKgRaw) || 0;
+    
+    console.log('🔍 calculatePrice DEBUG:', {
+        raw: jumlahKgRaw,
+        parsed: jumlahKg,
+        serviceId,
+        categoryId
+    });
 
     if (serviceId && categoryId && jumlahKg > 0) {
         const pricePerKg = getServicePriceByIdCategory(serviceId, categoryId);
-        const totalHarga = pricePerKg * jumlahKg;
+        const totalHarga = Math.round(pricePerKg * jumlahKg); // Round untuk menghindari floating point error
         hargaInput.value = totalHarga;
         hargaInput.dataset.pricePerKg = pricePerKg; 
+        
+        console.log('🔍 Calculation:', {
+            pricePerKg,
+            jumlahKg,
+            totalHarga
+        });
     } else {
         hargaInput.value = '';
         hargaInput.dataset.pricePerKg = 0;
@@ -341,7 +409,7 @@ function generateReceipt(data) {
         </div>
         <div class="receipt-row">
             <span>Berat:</span>
-            <span>${data.jumlahKg} kg</span>
+            <span>${formatDecimal(data.jumlahKg)} kg</span>
         </div>
         <div class="receipt-row">
             <span>Harga/kg:</span>
@@ -471,7 +539,7 @@ function clearForm() {
 }
 
 // ===============================
-// EDIT DATA FUNCTION
+// EDIT DATA FUNCTION - DIPERBAIKI
 // ===============================
 function editData(uid) {
     editingUid = uid;
@@ -499,11 +567,9 @@ function editData(uid) {
     // Set service
     if (item.serviceId) {
         document.getElementById('serviceName').value = item.serviceId;
-        // Trigger change event to populate categories
         const event = new Event('change', { bubbles: true });
         document.getElementById('serviceName').dispatchEvent(event);
         
-        // After a short delay, set the category
         setTimeout(() => {
             const catSelect = document.getElementById('jenisLaundry');
             if (catSelect && item.categoryId) {
@@ -512,8 +578,23 @@ function editData(uid) {
         }, 100);
     }
     
-    document.getElementById('jumlahKg').value = item.jumlahKg || '';
+    // 🔥 PERBAIKAN UTAMA: Set value dengan format yang tepat
+    const jumlahKgValue = parseFloat(item.jumlahKg) || 0;
+    
+    // Untuk input, gunakan format yang bisa diedit user
+    if (jumlahKgValue % 1 === 0) {
+        document.getElementById('jumlahKg').value = jumlahKgValue.toString(); // "2"
+    } else {
+        document.getElementById('jumlahKg').value = jumlahKgValue.toFixed(2); // "2.50"
+    }
+    
     document.getElementById('harga').value = item.harga || '';
+    
+    console.log('🔍 editData DEBUG:', {
+        itemJumlahKg: item.jumlahKg,
+        parsed: jumlahKgValue,
+        inputValue: document.getElementById('jumlahKg').value
+    });
     
     // Set payment radio
     const paymentOptions = document.querySelectorAll('#formModal .payment-option');
@@ -528,20 +609,24 @@ function editData(uid) {
         selectedRadio.closest('.payment-option').classList.add('selected');
     }
 
-    // Update modal title & button
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Data Laundry';
     document.getElementById('saveButtonText').textContent = 'Update';
 
-    // Show modal
     document.getElementById('formModal').classList.add('show');
 }
 
 // ===============================
-// UPDATE ORDER STATUS
+// UPDATE ORDER STATUS - DIPERBAIKI
 // ===============================
-async function updateOrderStatus(uid, tanggalAmbil, tanggalBayar, payment) {
+async function updateOrderStatus(uid, tanggalAmbil, metodePembayaran) {
     try {
-        const payload = { uid, tanggalAmbil, tanggalBayar, payment };
+        // 🔹 TANGGAL BAYAR OTOMATIS: hanya diisi jika bukan "belum bayar"
+        let tanggalBayar = null;
+        if (metodePembayaran && metodePembayaran !== 'none') {
+            tanggalBayar = tanggalAmbil; // Gunakan tanggal ambil sebagai tanggal bayar
+        }
+
+        const payload = { uid, tanggalAmbil, tanggalBayar, payment: metodePembayaran };
         console.log("DEBUG: updateOrderStatus payload:", payload);
 
         const res = await fetch("backend/update_order_status.php", {
@@ -562,14 +647,14 @@ async function updateOrderStatus(uid, tanggalAmbil, tanggalBayar, payment) {
 }
 
 // ===============================
-// FINISH MANAGEMENT
+// FINISH MANAGEMENT - DIPERBAIKI
 // ===============================
 function showFinishForm(uid, payment = null) {
     currentFinishUid = uid;
 
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("finishTanggalAmbil").value = today;
-    document.getElementById("finishTanggalBayar").value = today;
+    // 🔹 HAPUS INPUT TANGGAL BAYAR - tidak perlu lagi
 
     // Reset payment options
     const finishOptions = document.querySelectorAll('#finishModal .payment-option');
@@ -603,20 +688,25 @@ async function confirmFinish() {
     }
 
     const tanggalAmbil = document.getElementById("finishTanggalAmbil").value;
-    const tanggalBayar = document.getElementById("finishTanggalBayar").value;
-    const metodePembayaran = document.querySelector('input[name="payment"]:checked')?.value;
+    const metodePembayaran = document.querySelector('input[name="payment"]:checked')?.value || 'none';
 
-    if (!tanggalAmbil || !tanggalBayar || !metodePembayaran) {
+    if (!tanggalAmbil || !metodePembayaran) {
         alert("Lengkapi field yang wajib diisi!");
         return;
+    }
+
+    // 🔥 Auto isi tanggal bayar jika ada pembayaran
+    let tanggalBayar = null;
+    if (metodePembayaran !== 'none') {
+        tanggalBayar = new Date().toISOString().split('T')[0];
     }
 
     try {
         const result = await updateOrderStatus(
             currentFinishUid,
             tanggalAmbil,
-            tanggalBayar,
-            metodePembayaran
+            metodePembayaran,
+            tanggalBayar   // ⬅️ kirim otomatis ke backend
         );
 
         console.log("Hasil update order:", result);
@@ -624,7 +714,7 @@ async function confirmFinish() {
         if (result.success) {
             alert("Laundry berhasil diselesaikan & tersimpan di database!");
             hideFinishForm();
-            await loadOrders(); // Refresh data from DB
+            await loadOrders();
         } else {
             alert("Gagal update ke database. Status tetap progress.");
         }
@@ -637,7 +727,7 @@ async function confirmFinish() {
 }
 
 // ===============================
-// TABLE RENDERING
+// TABLE RENDERING - DIPERBAIKI
 // ===============================
 function renderOnProgressTable(data) {
     const tbody = document.getElementById('onProgressTable');
@@ -647,10 +737,13 @@ function renderOnProgressTable(data) {
     }
 
     tbody.innerHTML = data.map((item) => {
-        let paymentDisplay = '<span class="payment-status belum-bayar">BELUM BAYAR</span>';
-        if (item.payment && item.payment !== 'none') {
-            paymentDisplay = `<span class="jenis-badge">${item.payment.toUpperCase()}</span>`;
-        }
+let paymentDisplay;
+if (item.payment && item.payment !== 'none') {
+    paymentDisplay = `<span class="jenis-badge" data-payment="${item.payment}">${item.payment.toUpperCase()}</span>`;
+} else {
+    paymentDisplay = '<span class="payment-status" data-payment="none">BELUM BAYAR</span>';
+}
+
 
         // Get service and category names
         const serviceName = item.serviceName || getServiceNameById(item.serviceId) || 'Unknown Service';
@@ -664,7 +757,7 @@ function renderOnProgressTable(data) {
                 <td>${formatDate(item.tanggalSelesai)}</td>
                 <td><span class="service-badge">${serviceName}</span></td>
                 <td><span class="jenis-badge">${categoryName}</span></td>
-                <td>${item.jumlahKg} kg</td>
+                <td>${formatDecimal(item.jumlahKg)} kg</td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>${paymentDisplay}</td>
                 <td>
@@ -687,6 +780,7 @@ function renderOnProgressTable(data) {
     }).join('');
 }
 
+
 function renderFinishedTable(orders) {
     const tbody = document.getElementById('finishedTable');
     if (!orders || orders.length === 0) {
@@ -707,10 +801,10 @@ function renderFinishedTable(orders) {
                 <td>${formatDate(item.tanggalSelesai)}</td>
                 <td><span class="service-badge">${serviceName}</span></td>
                 <td><span class="jenis-badge">${categoryName}</span></td>
-                <td>${item.jumlahKg} kg</td>
+                <td>${formatDecimal(item.jumlahKg)} kg</td>
                 <td>${formatDate(item.tanggalAmbil)}</td>
-                <td>${formatDate(item.tanggalBayar)}</td>
-                <td><span class="jenis-badge">${item.payment ? item.payment.toUpperCase() : "-"}</span></td>
+                <td>${item.tanggalBayar ? formatDate(item.tanggalBayar) : '-'}</td>
+                <td><span class="jenis-badge" data-payment="${item.payment || 'none'}">${item.payment ? item.payment.toUpperCase() : "BELUM BAYAR"}</span></td>
                 <td><span class="currency">${formatRupiah(item.harga)}</span></td>
                 <td>
                     <div class="action-buttons">
@@ -726,6 +820,18 @@ function renderFinishedTable(orders) {
 
 function printFinishedOrder(order) {
     showReceiptModal(order);
+}
+
+function formatDecimal(value) {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '0';
+    
+    // 🔥 PERBAIKAN: Tampilkan hingga 2 desimal, tapi hilangkan .00 untuk bilangan bulat
+    if (num % 1 === 0) {
+        return num.toString(); // Tampilkan "2" bukan "2.00"
+    } else {
+        return num.toFixed(2); // Tampilkan "2.50" untuk decimal
+    }
 }
 
 // ===============================
@@ -840,7 +946,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (document.getElementById('finishTanggalAmbil')) {
         document.getElementById('finishTanggalAmbil').value = today;
     }
-    if (document.getElementById('finishTanggalBayar')) {
-        document.getElementById('finishTanggalBayar').value = today;
-    }
+    // 🔹 HAPUS SET DEFAULT TANGGAL BAYAR - tidak perlu lagi karena sudah otomatis
 });

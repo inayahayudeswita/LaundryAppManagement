@@ -3,8 +3,13 @@ include "config.php";
 header("Content-Type: application/json");
 
 try {
-    // Ambil semua cabang unik dari tabel users
-    $sql = "SELECT DISTINCT branch FROM users WHERE branch IS NOT NULL AND branch != '' ORDER BY branch";
+    // Ambil cabang unik hanya dari role kasir
+    $sql = "SELECT DISTINCT branch 
+            FROM users 
+            WHERE role = 'kasir'
+              AND branch IS NOT NULL 
+              AND branch != '' 
+            ORDER BY branch";
     $result = $conn->query($sql);
     
     if (!$result) {
