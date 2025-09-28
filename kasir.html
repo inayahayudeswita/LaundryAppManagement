@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laundry Rumah Kucek</title>
+    <title>Sistem Manajemen Laundry</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
 /* Reset & Base Styles */
@@ -772,7 +772,7 @@ tbody tr:hover {
 </head>
 <body>
     <div class="header">
-        <h1><i class="fas fa-tshirt"></i> Laundry Rumah Kucek</h1>
+        <h1><i class="fas fa-tshirt"></i> Sistem Manajemen Laundry</h1>
         <div class="user-info">
             <span id="currentBranch">Cabang 1</span>
             <span id="currentUser" hidden></span>
@@ -880,163 +880,166 @@ tbody tr:hover {
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- Add/Edit Form Modal -->
-<!-- Add/Edit Form Modal -->
-<div id="formModal" class="modal fixed hidden z-[1000] left-0 top-0 w-full h-full bg-black/70 backdrop-blur-sm items-center justify-center p-5">
-    <div class="modal-content bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl modal-slide-in">
-        <div class="modal-header px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2" id="modalTitle">
-                <i class="fas fa-plus-circle"></i>
-                Tambah Data Laundry
-            </h3>
-        </div>
-        
-        <div class="modal-body p-6">
-            <!-- Form Section 1: Nomor Nota & Nama Pelanggan -->
-            <div class="form-section mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-hashtag text-blue-500"></i>
-                            Nomor Nota
-                        </label>
-                        <input type="text" id="nomorNota" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-gray-50 text-gray-500" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-user text-blue-500"></i>
-                            Nama Pelanggan
-                        </label>
-                        <input type="text" id="namaPelanggan" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300" required 
-                               placeholder="Masukkan nama pelanggan">
-                    </div>
+        <div id="formModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">
+                        <i class="fas fa-plus-circle"></i>
+                        Tambah Data Laundry
+                    </h3>
                 </div>
-            </div>
-
-            <!-- Form Section 2: Tanggal -->
-            <div class="form-section mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-calendar-check text-blue-500"></i>
-                            Tanggal Terima
-                        </label>
-                        <input type="date" id="tanggalTerima" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300" required>
+                <div class="modal-body">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-receipt"></i>
+                            Informasi Nota
+                        </h4>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Nomor Nota
+                            </label>
+                            <input type="text" id="nomorNota" class="form-input" readonly>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Nomor nota otomatis berdasarkan format: LRK-PWK-YYMMDD-XXX
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-user"></i>
+                                Nama Pelanggan
+                            </label>
+                            <input type="text" id="namaPelanggan" class="form-input" required 
+                                   placeholder="Masukkan nama pelanggan">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-calendar-day text-blue-500"></i>
-                            Tanggal Selesai
-                        </label>
-                        <input type="date" id="tanggalSelesai" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300" required>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Form Section 3: Layanan -->
-            <div class="form-section mb-6">
-                <div class="space-y-4">
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-list text-blue-500"></i>
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Jadwal Laundry
+                        </h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Tanggal Terima
+                                </label>
+                                <input type="date" id="tanggalTerima" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-day"></i>
+                                    Tanggal Selesai
+                                </label>
+                                <input type="date" id="tanggalSelesai" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-cogs"></i>
                             Nama Layanan
-                        </label>
-                        <select id="serviceName" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300" required>
-                            <option value="">Pilih Layanan</option>
-                        </select>
-                        <div class="input-info mt-1 flex items-center gap-1 text-xs text-gray-500">
-                            <i class="fas fa-info-circle text-blue-400"></i> 
-                            Layanan diambil dari database admin
+                        </h4>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-list"></i>
+                                Nama Layanan
+                            </label>
+                            <select id="serviceName" class="form-input" required>
+                                <option value="">Pilih Layanan</option>
+                            </select>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Layanan diambil dari database admin
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tags"></i>
+                                Jenis Service
+                            </label>
+                            <select id="jenisLaundry" class="form-input" required disabled>
+                                <option value="">Pilih Jenis Service</option>
+                            </select>
+                            <div class="input-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Pilih layanan terlebih dahulu untuk melihat jenis yang tersedia
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-tags text-blue-500"></i>
-                            Jenis Service
-                        </label>
-                        <select id="jenisLaundry" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-gray-100" required disabled>
-                            <option value="">Pilih Jenis Service</option>
-                        </select>
-                        <div class="input-info mt-1 flex items-center gap-1 text-xs text-gray-500">
-                            <i class="fas fa-info-circle text-blue-400"></i> 
-                            Pilih layanan terlebih dahulu untuk melihat jenis yang tersedia
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Form Section 4: Berat & Harga -->
-            <div class="form-section mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-weight text-blue-500"></i>
-                            Jumlah (Kg)
-                        </label>
-                        <input type="number" step="0.01" id="jumlahKg" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300" required 
-                                placeholder="0.00" min="0.01" oninput="calculatePrice()" onblur="validateDecimalInput(this)">
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calculator"></i>
+                            Kalkulasi
+                        </h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-weight"></i>
+                                    Jumlah (Kg)
+                                </label>
+                                <input type="number" step="0.1" id="jumlahKg" class="form-input" required 
+                                       placeholder="0.0" min="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Total Harga
+                                </label>
+                                <input type="number" id="harga" class="form-input" required readonly>
+                                <div class="input-info">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Harga otomatis berdasarkan jenis layanan & berat
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label block mb-2 font-semibold text-gray-700 text-sm flex items-center gap-2">
-                            <i class="fas fa-money-bill-wave text-blue-500"></i>
-                            Total Harga
-                        </label>
-                        <input type="number" id="harga" class="form-input w-full py-3 px-4 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-gray-50 text-gray-700" required readonly>
-                        <div class="input-info mt-1 flex items-center gap-1 text-xs text-gray-500">
-                            <i class="fas fa-info-circle text-blue-400"></i> 
-                            Harga otomatis berdasarkan jenis layanan & berat
+
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-credit-card"></i>
+                            Metode Pembayaran
+                        </h4>
+                        <div class="payment-options">
+                            <div class="payment-option" onclick="selectPayment('none', 'form')">
+                                <input type="radio" name="formPayment" value="none" id="formNone">
+                                <label for="formNone">
+                                    <i class="fas fa-clock"></i> 
+                                    <span>Belum Bayar</span>
+                                </label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('cash', 'form')">
+                                <input type="radio" name="formPayment" value="cash" id="formCash">
+                                <label for="formCash">
+                                    <i class="fas fa-money-bill"></i> 
+                                    <span>Cash</span>
+                                </label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('transfer', 'form')">
+                                <input type="radio" name="formPayment" value="transfer" id="formTransfer">
+                                <label for="formTransfer">
+                                    <i class="fas fa-university"></i> 
+                                    <span>Transfer</span>
+                                </label>
+                            </div>
+                            <div class="payment-option" onclick="selectPayment('qris', 'form')">
+                                <input type="radio" name="formPayment" value="qris" id="formQris">
+                                <label for="formQris">
+                                    <i class="fas fa-qrcode"></i> 
+                                    <span>QRIS</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Form Section 5: Metode Pembayaran -->
-            <div class="form-section">
-                <h4 class="section-title text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fas fa-credit-card text-blue-500"></i>
-                    Metode Pembayaran
-                </h4>
-                
-                <div class="payment-options grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="payment-option none-option border-2 border-yellow-500 rounded-lg p-3 cursor-pointer transition-all duration-300 text-center bg-gradient-to-r from-yellow-50 to-yellow-100" onclick="selectPayment('none', 'form')">
-                        <input type="radio" name="formPayment" value="none" id="formNone" class="hidden">
-                        <label for="formNone" class="flex flex-col items-center gap-2 cursor-pointer text-xs font-semibold">
-                            <i class="fas fa-clock text-xl text-yellow-500"></i> 
-                            <span>Belum Bayar</span>
-                        </label>
-                    </div>
-                    
-                    <div class="payment-option cash-option border-2 border-green-500 rounded-lg p-3 cursor-pointer transition-all duration-300 text-center bg-gradient-to-r from-green-50 to-green-100" onclick="selectPayment('cash', 'form')">
-                        <input type="radio" name="formPayment" value="cash" id="formCash" class="hidden">
-                        <label for="formCash" class="flex flex-col items-center gap-2 cursor-pointer text-xs font-semibold">
-                            <i class="fas fa-money-bill text-xl text-green-500"></i> 
-                            <span>Cash</span>
-                        </label>
-                    </div>
-                    
-                    <div class="payment-option transfer-option border-2 border-blue-500 rounded-lg p-3 cursor-pointer transition-all duration-300 text-center bg-gradient-to-r from-blue-50 to-blue-100" onclick="selectPayment('transfer', 'form')">
-                        <input type="radio" name="formPayment" value="transfer" id="formTransfer" class="hidden">
-                        <label for="formTransfer" class="flex flex-col items-center gap-2 cursor-pointer text-xs font-semibold">
-                            <i class="fas fa-university text-xl text-blue-500"></i> 
-                            <span>Transfer</span>
-                        </label>
-                    </div>
-                    
-                    <div class="payment-option qris-option border-2 border-purple-500 rounded-lg p-3 cursor-pointer transition-all duration-300 text-center bg-gradient-to-r from-purple-50 to-purple-100" onclick="selectPayment('qris', 'form')">
-                        <input type="radio" name="formPayment" value="qris" id="formQris" class="hidden">
-                        <label for="formQris" class="flex flex-col items-center gap-2 cursor-pointer text-xs font-semibold">
-                            <i class="fas fa-qrcode text-xl text-purple-500"></i> 
-                            <span>QRIS</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-       <div class="modal-footer">
+                <div class="modal-footer">
                     <button class="btn btn-primary" onclick="saveData()">
                         <i class="fas fa-save"></i>
                         <span id="saveButtonText">Simpan</span>
@@ -1046,8 +1049,8 @@ tbody tr:hover {
                         Batal
                     </button>
                 </div>
-    </div>
-</div>
+            </div>
+        </div>
 
         <!-- Finish Modal -->
         <div id="finishModal" class="modal">
@@ -1071,6 +1074,13 @@ tbody tr:hover {
                                     Tanggal Ambil
                                 </label>
                                 <input type="date" id="finishTanggalAmbil" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-day"></i>
+                                    Tanggal Bayar
+                                </label>
+                                <input type="date" id="finishTanggalBayar" class="form-input" required>
                             </div>
                         </div>
                     </div>
@@ -1117,38 +1127,37 @@ tbody tr:hover {
             </div>
         </div>
 
-        <!-- Receipt Modal -->
-        <div id="receiptModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>
-                        <i class="fas fa-receipt"></i>
-                        Struk Laundry
-                    </h3>
-                </div>
-                <div class="modal-body">
-                    <div class="receipt" id="receipt">
-                        <div class="receipt-header">
-                            <h3>CLEAN & FRESH LAUNDRY</h3>
-                            <p id="receiptBranch">Cabang 1</p>
-                            <p>Jl. Contoh No. 123</p>
-                            <p>Telp: (021) 123-4567</p>
-                        </div>
-                        <div id="receiptContent">
-                            <!-- Receipt content will be generated here -->
-                        </div>
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-receipt" style="color: #3b82f6;"></i>
+                    Struk Laundry
+                </h3>
+            </div>
+            <div class="modal-body">
+                <div class="receipt" id="receipt">
+                    <div class="receipt-header">
+                        <h3>LAUNDRY RUMAH KUCEK</h3>
+                        <p id="receiptBranch">Cabang 1</p>
+                        <p>Jl. Contoh No. 123</p>
+                        <p>Telp: (021) 123-4567</p>
+                    </div>
+                    <div id="receiptContent">
+                        <!-- Receipt content will be generated here -->
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="printReceipt()">
-                        <i class="fas fa-print"></i>
-                        Cetak
-                    </button>
-                    <button class="btn btn-secondary" onclick="hideReceiptModal()">
-                        <i class="fas fa-times"></i>
-                        Tutup
-                    </button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="printReceipt()">
+                    <i class="fas fa-print"></i>
+                    Cetak
+                </button>
+                <button class="btn btn-secondary" onclick="hideReceiptModal()">
+                    <i class="fas fa-times"></i>
+                    Tutup
+                </button>
             </div>
         </div>
     </div>
